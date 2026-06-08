@@ -42,6 +42,17 @@ class ShopCustomerAuth(models.Model):
         ],
         default="web",
     )
+    role = fields.Selection(
+    [
+        ("customer", "Cliente"),
+        ("seller", "Vendedor"),
+        ("admin", "Administrador"),
+    ],
+    string="Rol",
+    default="customer",
+    required=True,
+    index=True,
+)
 
     _sql_constraints = [
         (
