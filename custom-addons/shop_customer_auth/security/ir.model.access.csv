@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_shop_customer_auth,shop.customer.auth,model_shop_customer_auth,base.group_user,1,1,1,0
+access_shop_password_reset_audit_api,shop.password.reset.audit API,model_shop_password_reset_audit,shop_customer_auth.group_shop_password_reset_api,1,0,1,0
+access_password_reset_token_api,password.reset.token API,model_password_reset_token,shop_customer_auth.group_shop_password_reset_api,1,1,1,0
