@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="shop_customer_auth.ComboConfiguratorPopup" t-inherit="point_of_sale.ComboConfiguratorPopup" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('product-list')]" position="attributes">
+            <attribute name="class" add="shop-pos-combo-product-list" separator=" "/>
+        </xpath>
+        <xpath expr="//div[hasclass('product-list')]/div" position="attributes">
+            <attribute name="class">shop-pos-combo-product-row</attribute>
+        </xpath>
+        <xpath expr="//ProductCard" position="attributes">
+            <attribute name="class">'shop-pos-combo-product-card flex-row h-100 border'</attribute>
+        </xpath>
+    </t>
+</templates>

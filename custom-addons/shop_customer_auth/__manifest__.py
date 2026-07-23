@@ -17,7 +17,16 @@ Long description of module's purpose
     'version': '19.0.1.0.0',
 
     # any module necessary for this one to work correctly
-    'depends': ['base'],
+    'depends': ['base', 'point_of_sale'],
+
+    'assets': {
+        'point_of_sale._assets_pos': [
+            'shop_customer_auth/static/src/pos/product_screen.js',
+            'shop_customer_auth/static/src/pos/product_screen.xml',
+            'shop_customer_auth/static/src/pos/combo_configurator.xml',
+            'shop_customer_auth/static/src/pos/pos_product_list.scss',
+        ],
+    },
 
     # always loaded
     'data': [
