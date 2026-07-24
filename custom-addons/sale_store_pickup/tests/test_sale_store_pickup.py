@@ -56,3 +56,26 @@ class TestSaleStorePickup(TransactionCase):
             ("x_is_store_pickup", "=", True),
         ])
         self.assertEqual(pickups, pickup_order)
+
+    def test_shipping_data_is_stored_on_sale_order(self):
+        state = self.env["res.country.state"].search([], limit=1)
+        order = self.env["sale.order"].create({
+            "partner_id": self.partner.id,
+            "x_shipping_phone": "3515551234",
+            "x_shipping_street": "San Martín",
+            "x_shipping_street_number": "123",
+            "x_shipping_floor_apartment": "2 B",
+            "x_shipping_city": "Córdoba",
+            "x_shipping_state_id": state.id,
+            "x_shipping_zip": "5000",
+            "x_shipping_notes": "Portón negro",
+            "x_shipping_real_cost": 8500.0,
+        })
+
+        self.assertEqual(order.x_shipping_city, "Córdoba")
+        self.assertEqual(order.x_shipping_state_id, state)
+        self.assertEqual(order.x_shipping_real_cost, 8500.0)
+        self.assertTrue(self.env["sale.order"]._fields["x_shipping_city"].index)
+        self.assertTrue(
+            self.env["sale.order"]._fields["x_shipping_state_id"].index
+        )

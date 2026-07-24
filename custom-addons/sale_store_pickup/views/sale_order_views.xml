@@ -16,6 +16,34 @@
             <xpath expr="//group[@name='sale_shipping']/label[@for='commitment_date']" position="before">
                 <field name="x_is_store_pickup" widget="boolean_toggle"/>
             </xpath>
+            <xpath expr="//page[@name='order_lines']" position="after">
+                <page
+                    string="Datos de envío"
+                    name="simple_shipping_data"
+                    invisible="x_is_store_pickup"
+                >
+                    <group>
+                        <group>
+                            <field name="x_shipping_phone" widget="phone"/>
+                            <field name="x_shipping_street"/>
+                            <field name="x_shipping_street_number"/>
+                            <field name="x_shipping_floor_apartment"/>
+                        </group>
+                        <group>
+                            <field name="x_shipping_city"/>
+                            <field name="x_shipping_state_id"/>
+                            <field name="x_shipping_zip"/>
+                            <field name="x_shipping_real_cost"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field
+                            name="x_shipping_notes"
+                            placeholder="Entre calles, horarios u otras indicaciones..."
+                        />
+                    </group>
+                </page>
+            </xpath>
         </field>
     </record>
 
@@ -57,6 +85,16 @@
                     name="group_by_store_pickup"
                     string="Retiro en local"
                     context="{'group_by': 'x_is_store_pickup'}"
+                />
+                <filter
+                    name="group_by_shipping_state"
+                    string="Provincia de envío"
+                    context="{'group_by': 'x_shipping_state_id'}"
+                />
+                <filter
+                    name="group_by_shipping_city"
+                    string="Localidad de envío"
+                    context="{'group_by': 'x_shipping_city'}"
                 />
             </filter>
         </field>

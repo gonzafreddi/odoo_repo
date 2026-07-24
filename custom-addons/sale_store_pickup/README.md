@@ -1,8 +1,14 @@
 # Sale Store Pickup
 
 Agrega el campo booleano almacenado e indexado `x_is_store_pickup` a
-`sale.order`. El backend es la única fuente del valor: el módulo no contiene
-onchanges, campos calculados ni lógica vinculada con `carrier_id`.
+`sale.order` y datos simples de envío almacenados directamente en la venta:
+teléfono, calle, número, piso/departamento, localidad, provincia, código
+postal, referencias y costo real cotizado. El cliente de la orden es el
+destinatario, por lo que no se duplica ese dato.
+
+El módulo no usa lógica vinculada con `carrier_id`. El costo real del envío
+se completa manualmente después de cotizarlo. Provincia, localidad y código
+postal permiten búsquedas y métricas geográficas.
 
 ## Instalación y actualización
 
