@@ -1,3 +1,5 @@
+import base64
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -65,3 +67,48 @@ class SaleOrder(models.Model):
                 raise ValidationError(
                     "Un envío a domicilio no puede quedar Listo para retirar."
                 )
+
+    def action_print_shipping_remito(self):
+        return self.env.ref(
+            "sale_store_pickup.action_report_shipping_remito"
+        ).report_action(self)
+
+    def _generate_shipping_remito_attachment(self):
+        attachment_model = self.env["ir.attachment"]
+        for order in self:
+            attachment_name = f"Remito de envío - {order.name}.pdf"
+            existing = attachment_model.search([
+                ("res_model", "=", order._name),
+                ("res_id", "=", order.id),
+                ("name", "=", attachment_name),
+            ], limit=1)
+            if existing:
+                continue
+            pdf_content, _content_type = self.env[
+                "ir.actions.report"
+            ]._render_qweb_pdf(
+                "sale_store_pickup.action_report_shipping_remito",
+                res_ids=order.ids,
+            )
+            attachment = attachment_model.create({
+                "name": attachment_name,
+                "type": "binary",
+                "datas": base64.b64encode(pdf_content),
+                "mimetype": "application/pdf",
+                "res_model": order._name,
+                "res_id": order.id,
+            })
+            order.message_post(
+                body="Remito de envío generado automáticamente.",
+                attachment_ids=attachment.ids,
+            )
+
+    def write(self, values):
+        orders_to_generate = self.env["sale.order"]
+        if values.get("x_logistics_status") == "shipped":
+            orders_to_generate = self.filtered(
+                lambda order: order.x_logistics_status != "shipped"
+            )
+        result = super().write(values)
+        orders_to_generate._generate_shipping_remito_attachment()
+        return result

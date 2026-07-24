@@ -88,6 +88,25 @@ class TestSaleStorePickup(TransactionCase):
         with self.assertRaises(ValidationError):
             order.x_logistics_status = "ready_pickup"
 
+    def test_shipping_remito_is_created_when_order_is_shipped(self):
+        order = self.env["sale.order"].create({
+            "partner_id": self.partner.id,
+            "x_shipping_street": "San Martín",
+            "x_shipping_street_number": "123",
+            "x_shipping_city": "Córdoba",
+        })
+
+        order.x_logistics_status = "shipped"
+
+        attachment = self.env["ir.attachment"].search([
+            ("res_model", "=", "sale.order"),
+            ("res_id", "=", order.id),
+            ("name", "=", f"Remito de envío - {order.name}.pdf"),
+        ])
+        self.assertEqual(len(attachment), 1)
+        self.assertEqual(attachment.mimetype, "application/pdf")
+        self.assertTrue(attachment.datas)
+
     def test_pickup_rejects_shipped_status(self):
         order = self.env["sale.order"].create({
             "partner_id": self.partner.id,

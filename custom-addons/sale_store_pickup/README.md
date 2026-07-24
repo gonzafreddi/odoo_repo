@@ -10,6 +10,10 @@ El módulo no usa lógica vinculada con `carrier_id`. El costo real del envío
 se completa manualmente después de cotizarlo. Provincia, localidad y código
 postal permiten búsquedas y métricas geográficas.
 
+Al pasar un envío al estado `shipped`, el módulo genera y adjunta un remito PDF
+operativo sin precios ni costos. También puede imprimirse manualmente desde la
+orden con el botón **Imprimir remito**.
+
 El campo `x_logistics_status` mantiene un seguimiento logístico independiente
 del estado comercial estándar de Odoo. Sus valores son pendiente, en
 preparación, enviado, listo para retirar, entregado y cancelado.

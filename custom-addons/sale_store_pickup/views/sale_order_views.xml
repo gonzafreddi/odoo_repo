@@ -16,6 +16,9 @@
             <xpath expr="//group[@name='sale_shipping']/label[@for='commitment_date']" position="before">
                 <field name="x_is_store_pickup" widget="boolean_toggle"/>
             </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_print_shipping_remito" string="Imprimir remito" type="object" class="btn-secondary" invisible="x_is_store_pickup"/>
+            </xpath>
             <xpath expr="//page[@name='order_lines']" position="after">
                 <page
                     string="Datos de envío"

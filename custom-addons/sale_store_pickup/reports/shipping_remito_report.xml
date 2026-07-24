@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_shipping_remito" model="ir.actions.report">
+        <field name="name">Remito de envío</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sale_store_pickup.report_shipping_remito</field>
+        <field name="report_file">sale_store_pickup.report_shipping_remito</field>
+        <field name="print_report_name">'Remito de envío - %s' % object.name</field>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_shipping_remito">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="order">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Remito de envío</h2>
+                        <p class="text-muted">Documento operativo interno — no válido como factura fiscal.</p>
+                        <div class="row mt-4 mb-4">
+                            <div class="col-6">
+                                <strong>Orden:</strong> <span t-field="order.name"/><br/>
+                                <strong>Fecha:</strong> <span t-field="order.date_order"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Cliente:</strong> <span t-field="order.partner_id"/><br/>
+                                <strong>Teléfono:</strong> <span t-field="order.x_shipping_phone"/>
+                            </div>
+                        </div>
+                        <h4>Dirección de entrega</h4>
+                        <p>
+                            <span t-field="order.x_shipping_street"/>
+                            <span t-if="order.x_shipping_street_number"><t t-esc="' ' + order.x_shipping_street_number"/></span>
+                            <span t-if="order.x_shipping_floor_apartment"> — <span t-field="order.x_shipping_floor_apartment"/></span><br/>
+                            <span t-field="order.x_shipping_city"/>
+                            <span t-if="order.x_shipping_state_id"> — <span t-field="order.x_shipping_state_id"/></span>
+                            <span t-if="order.x_shipping_zip"> (CP <span t-field="order.x_shipping_zip"/>)</span>
+                        </p>
+                        <div t-if="order.x_shipping_notes" class="mb-4">
+                            <strong>Referencias de entrega:</strong><p t-field="order.x_shipping_notes"/>
+                        </div>
+                        <table class="table table-sm">
+                            <thead><tr><th>Producto</th><th class="text-end">Cantidad</th></tr></thead>
+                            <tbody>
+                                <t t-foreach="order.order_line" t-as="line">
+                                    <tr t-if="not line.display_type">
+                                        <td><span t-field="line.name"/></td>
+                                        <td class="text-end"><span t-field="line.product_uom_qty"/> <span t-field="line.product_uom_id"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div class="row mt-5">
+                            <div class="col-6 text-center"><div class="border-top pt-2">Preparado por</div></div>
+                            <div class="col-6 text-center"><div class="border-top pt-2">Recibí conforme: firma y aclaración</div></div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

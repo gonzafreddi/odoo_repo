@@ -11,6 +11,7 @@
     ],
     "data": [
         "views/sale_order_views.xml",
+        "reports/shipping_remito_report.xml",
     ],
     "installable": True,
     "application": False,
