@@ -10,6 +10,10 @@ El módulo no usa lógica vinculada con `carrier_id`. El costo real del envío
 se completa manualmente después de cotizarlo. Provincia, localidad y código
 postal permiten búsquedas y métricas geográficas.
 
+El campo `x_logistics_status` mantiene un seguimiento logístico independiente
+del estado comercial estándar de Odoo. Sus valores son pendiente, en
+preparación, enviado, listo para retirar, entregado y cancelado.
+
 ## Instalación y actualización
 
 Incluya `custom-addons` en el `addons_path` de Odoo y ejecute:

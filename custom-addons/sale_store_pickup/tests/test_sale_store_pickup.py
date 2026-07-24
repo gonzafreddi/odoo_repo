@@ -1,3 +1,4 @@
+from odoo.exceptions import ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase, new_test_user
 
@@ -29,6 +30,7 @@ class TestSaleStorePickup(TransactionCase):
 
         order = self.env["sale.order"].create({"partner_id": self.partner.id})
         self.assertFalse(order.x_is_store_pickup)
+        self.assertEqual(order.x_logistics_status, "pending")
 
     def test_create_and_search_as_xmlrpc_sales_user(self):
         SaleOrder = self.env["sale.order"].with_user(self.sales_user)
@@ -79,3 +81,20 @@ class TestSaleStorePickup(TransactionCase):
         self.assertTrue(
             self.env["sale.order"]._fields["x_shipping_state_id"].index
         )
+
+        order.x_logistics_status = "preparing"
+        self.assertEqual(order.x_logistics_status, "preparing")
+
+        with self.assertRaises(ValidationError):
+            order.x_logistics_status = "ready_pickup"
+
+    def test_pickup_rejects_shipped_status(self):
+        order = self.env["sale.order"].create({
+            "partner_id": self.partner.id,
+            "x_is_store_pickup": True,
+        })
+
+        order.x_logistics_status = "ready_pickup"
+        self.assertEqual(order.x_logistics_status, "ready_pickup")
+        with self.assertRaises(ValidationError):
+            order.x_logistics_status = "shipped"
