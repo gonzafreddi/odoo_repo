@@ -12,6 +12,7 @@
     --line: #dce5e2;
     --font-display: "Dashboard Raleway", "Segoe UI Variable Display", sans-serif;
     --font-body: "Dashboard Roboto", "Segoe UI Variable Text", sans-serif;
+    --font-data: "Dashboard Roboto", "Segoe UI Variable Text", sans-serif;
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -74,7 +75,7 @@
 }
 .kpi_label { display: block; min-height: 2rem; color: var(--muted); font-size: .76rem; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
 .is-featured .kpi_label { color: #aac0c5; }
-.kpi_value { display: block; margin: .25rem 0 .6rem; font-family: var(--font-display); font-size: clamp(1.45rem, 2.2vw, 2.25rem); font-weight: 500; letter-spacing: -.025em; }
+.kpi_value { display: block; margin: .35rem 0 .7rem; font-family: var(--font-data); font-size: clamp(1.3rem, 2vw, 2rem); font-weight: 700; font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; line-height: 1.05; letter-spacing: -.035em; }
 .kpi_comparison, .snapshot_badge { display: block; font-size: .73rem; color: var(--muted); }
 .kpi_comparison.is-positive { color: #168367; }.kpi_comparison.is-negative { color: #c34c43; }
 .snapshot_badge { color: var(--amber); font-weight: 700; }
@@ -85,7 +86,7 @@
 .channel_intro p { margin: 0; color: var(--muted); font-size: .78rem; }
 .channel_strip > button { display: flex; flex-direction: column; align-items: start; padding: .9rem; border: 1px solid var(--line); border-radius: .55rem; background: #eaf3f1; color: var(--ink); text-align: left; }
 .channel_strip > button > span { color: var(--teal); font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
-.channel_strip > button strong { margin: .35rem 0; font-family: var(--font-display); font-size: 1.5rem; font-weight: 500; }
+.channel_strip > button strong { margin: .35rem 0; font-family: var(--font-data); font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums lining-nums; letter-spacing: -.025em; }
 .channel_strip > button small { color: var(--muted); }
 .channel_strip > button em { margin-top: auto; padding-top: .65rem; font-size: .72rem; font-style: normal; }
 .channel_strip > button em.is-positive { color: #168367; }.channel_strip > button em.is-negative { color: #c34c43; }.channel_strip > button em.is-neutral { color: var(--muted); }
@@ -151,11 +152,11 @@
 .profitability_kpi.is-featured { background: var(--ink); color: #fff; border-color: var(--ink); }
 .profitability_kpi.is-featured .kpi_label { color: #aac0c5; }
 .profitability_kpi .kpi_label { min-height: auto; overflow-wrap: anywhere; }
-.profitability_kpi .kpi_value { max-width: 100%; font-size: clamp(1.12rem, 1.8vw, 1.8rem); line-height: 1.15; overflow-wrap: anywhere; }
+.profitability_kpi .kpi_value { max-width: 100%; font-size: clamp(1rem, 1.45vw, 1.5rem); line-height: 1.05; white-space: nowrap; }
 .profitability_explanation { margin: 1rem 0 0; padding: .85rem 1rem; border-left: 3px solid var(--teal); background: #eaf3f1; color: var(--muted); font-size: .82rem; line-height: 1.5; }
 .profitability_formula { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: .55rem; margin-top: 1rem; }
 .profitability_formula span { display: flex; min-width: 0; overflow: hidden; flex-direction: column; justify-content: center; min-height: 5rem; padding: .8rem; border: 1px solid var(--line); border-radius: .55rem; background: var(--card); color: var(--muted); font-size: .75rem; }
-.profitability_formula b { max-width: 100%; margin-bottom: .25rem; color: var(--ink); font-family: var(--font-display); font-size: clamp(.92rem, 1.25vw, 1.2rem); font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.profitability_formula b { max-width: 100%; margin-bottom: .3rem; color: var(--ink); font-family: var(--font-data); font-size: clamp(.95rem, 1.2vw, 1.15rem); font-weight: 700; font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; line-height: 1.05; letter-spacing: -.025em; white-space: nowrap; }
 .profitability_formula i { align-self: center; color: var(--muted); font-size: 1.3rem; font-style: normal; }
 .profitability_formula .result { background: #eaf3f1; border-color: #bfd8d2; }
 .profitability_panel table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
@@ -166,6 +167,8 @@
 .profitability_panel td.is-positive { color: #168367; font-weight: 700; }
 .profitability_panel td.is-negative { color: #c34c43; font-weight: 700; }
 .profitability_note { margin: 1rem 0 0; color: var(--muted); font-size: .75rem; }
+
+.payment_panel td, .daily_sales_view td, .category_panel td, .profitability_panel td, .account_list strong, .bar_value, .low_stock_grid b { font-family: var(--font-data); font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
 
 @media (max-width: 1000px) { .dashboard_header { align-items: start; flex-direction: column; }.dashboard_filters { justify-content: start; }.kpi_card { grid-column: span 4; }.kpi_card.is-featured { grid-column: span 8; }.channel_strip { grid-template-columns: repeat(3, 1fr); }.channel_intro { grid-column: 1 / -1; }.low_stock_grid { grid-template-columns: repeat(2, 1fr); } .profitability_kpi { grid-column: span 6; }.profitability_formula { grid-template-columns: repeat(2, minmax(0, 1fr)); }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: span 2; } }
 @media (max-width: 700px) { .o_shop_executive_dashboard { padding: 1rem; }.dashboard_filters { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }.preset_group { grid-column: 1 / -1; }.preset_group button { flex: 1; }.dashboard_filters input { width: 100%; }.kpi_card, .kpi_card.is-featured { grid-column: span 12; min-height: 7.5rem; }.channel_strip { grid-template-columns: 1fr; }.channel_intro { grid-column: auto; }.analysis_grid { grid-template-columns: 1fr; }.low_stock_grid { grid-template-columns: 1fr; }.comparison_note { text-align: left; } .profitability_kpi { grid-column: span 12; }.profitability_formula { grid-template-columns: 1fr; }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: auto; } }
