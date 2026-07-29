@@ -111,7 +111,7 @@
 .bar_column { display: grid; grid-template-rows: 2.8rem 1fr 1.8rem; flex: 1 0 3.2rem; min-width: 3.2rem; max-width: 5.5rem; text-align: center; }
 .bar_value { align-self: end; overflow: hidden; color: var(--muted); font-size: .64rem; text-overflow: ellipsis; white-space: nowrap; }
 .bar_plot { display: flex; align-items: end; justify-content: center; min-height: 16rem; margin: .4rem 0; border-bottom: 1px solid #aebfba; background: linear-gradient(to top, rgba(8,127,115,.035) 1px, transparent 1px); background-size: 100% 25%; }
-.bar_plot i { display: block; width: min(2.3rem, 72%); min-height: 0; border-radius: .25rem .25rem 0 0; background: linear-gradient(180deg, #19a08f, var(--teal)); transition: height .3s ease; }
+.bar_plot i { display: block; width: #{"min(2.3rem, 72%)"}; min-height: 0; border-radius: .25rem .25rem 0 0; background: linear-gradient(180deg, #19a08f, var(--teal)); transition: height .3s ease; }
 .bar_plot i.negative { background: linear-gradient(180deg, #d46a5e, #a93d35); }
 .bar_column > strong { color: var(--muted); font: 700 .68rem ui-monospace, monospace; }
 
