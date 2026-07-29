@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_shop_quick_stock_adjustment" model="ir.actions.client">
+        <field name="name">Ajuste rápido de stock</field>
+        <field name="tag">shop_customer_auth.quick_stock_adjustment</field>
+    </record>
+
+    <menuitem
+        id="menu_shop_quick_stock_adjustment"
+        name="Ajuste rápido"
+        parent="stock.menu_stock_inventory_control"
+        action="action_shop_quick_stock_adjustment"
+        groups="stock.group_stock_manager"
+        sequence="2"
+    />
+</odoo>

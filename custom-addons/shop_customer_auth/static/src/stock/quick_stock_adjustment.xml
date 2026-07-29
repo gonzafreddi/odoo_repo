@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="shop_customer_auth.QuickStockAdjustment">
+        <main class="o_quick_stock" aria-labelledby="quick-stock-title">
+            <header class="quick_stock_header">
+                <div>
+                    <span class="quick_stock_eyebrow">INVENTARIO · <t t-esc="state.companyName"/></span>
+                    <h1 id="quick-stock-title">Ajuste rápido</h1>
+                    <p>Escaneá, contá y corregí sin abandonar la pantalla.</p>
+                </div>
+                <label class="quick_stock_location">
+                    <span>Ubicación</span>
+                    <select t-att-value="state.locationId" t-on-change="onLocationChange" t-att-disabled="state.saving">
+                        <option t-foreach="state.locations" t-as="location" t-key="location.id"
+                                t-att-value="location.id" t-esc="location.name"/>
+                    </select>
+                </label>
+            </header>
+
+            <div t-if="state.loading" class="quick_stock_status">Preparando ubicaciones…</div>
+            <div t-if="state.error" class="quick_stock_error" role="alert">
+                <span t-esc="state.error"/>
+                <button t-on-click="() => state.error = null" aria-label="Cerrar">×</button>
+            </div>
+
+            <section t-if="!state.loading" class="quick_stock_search" aria-label="Buscar producto">
+                <div class="quick_stock_searchbox">
+                    <i class="fa fa-search" aria-hidden="true"/>
+                    <input t-ref="searchInput" type="search" inputmode="search"
+                           placeholder="Escanear código o buscar producto…"
+                           t-att-value="state.query" t-on-input="onQueryInput"
+                           t-on-keydown="onSearchKeydown" autocomplete="off"/>
+                    <span t-if="state.searching" class="quick_stock_spinner" aria-label="Buscando"/>
+                    <button class="quick_stock_camera" t-on-click="scanWithCamera" title="Escanear con cámara">
+                        <i class="fa fa-camera" aria-hidden="true"/><span>Escanear</span>
+                    </button>
+                </div>
+                <div t-if="state.results.length" class="quick_stock_results">
+                    <button t-foreach="state.results" t-as="product" t-key="product.id"
+                            t-on-click="() => this.selectProduct(product)">
+                        <img t-att-src="product.image_url" alt=""/>
+                        <span><strong t-esc="product.name"/><small><t t-esc="product.default_code || 'Sin referencia'"/> · <t t-esc="product.barcode || 'Sin código'"/></small></span>
+                        <b><t t-esc="formatQuantity(product.quantity)"/> <small t-esc="product.uom_name"/></b>
+                    </button>
+                </div>
+            </section>
+
+            <section t-if="state.product" class="quick_stock_product" aria-live="polite">
+                <div class="quick_stock_product_heading">
+                    <img t-att-src="state.product.image_url" alt=""/>
+                    <div>
+                        <span>PRODUCTO SELECCIONADO</span>
+                        <h2 t-esc="state.product.name"/>
+                        <p><t t-esc="state.product.default_code || 'Sin referencia'"/> · <t t-esc="state.product.barcode || 'Sin código de barras'"/></p>
+                    </div>
+                    <button t-on-click="clearProduct" aria-label="Cambiar producto">×</button>
+                </div>
+
+                <div t-if="!state.product.quick_adjustable" class="quick_stock_tracking">
+                    <strong>No se puede ajustar desde esta pantalla.</strong>
+                    <span t-esc="state.product.blocker"/>
+                </div>
+                <t t-else="">
+                    <div class="quick_stock_count">
+                        <div class="quick_stock_system">
+                            <span>Stock del sistema</span>
+                            <strong t-esc="formatQuantity(state.product.quantity)"/>
+                            <small t-esc="state.product.uom_name"/>
+                        </div>
+                        <div class="quick_stock_counted">
+                            <label for="quick-counted">Cantidad contada</label>
+                            <div>
+                                <button t-on-click="() => this.changeQuantity(-1)" t-att-disabled="state.saving" aria-label="Restar uno">−</button>
+                                <input id="quick-counted" type="number" min="0" step="any" inputmode="decimal"
+                                       t-model="state.countedQuantity" t-att-disabled="state.saving"/>
+                                <button t-on-click="() => this.changeQuantity(1)" t-att-disabled="state.saving" aria-label="Sumar uno">+</button>
+                            </div>
+                        </div>
+                        <div t-att-class="'quick_stock_difference ' + differenceClass()">
+                            <span>Diferencia</span>
+                            <strong><t t-if="difference > 0">+</t><t t-esc="formatQuantity(difference)"/></strong>
+                            <small t-esc="state.product.uom_name"/>
+                        </div>
+                    </div>
+                    <button class="quick_stock_apply" t-on-click="applyAdjustment"
+                            t-att-disabled="state.saving || state.countedQuantity === ''">
+                        <span t-if="state.saving" class="quick_stock_spinner"/> 
+                        <t t-if="state.saving">Aplicando…</t><t t-else="">Confirmar ajuste</t>
+                    </button>
+                </t>
+            </section>
+
+            <section t-if="!state.product &amp;&amp; !state.results.length &amp;&amp; !state.loading" class="quick_stock_ready">
+                <i class="fa fa-barcode" aria-hidden="true"/>
+                <strong>Listo para leer</strong>
+                <span>Usá un lector, la cámara o escribí el nombre del producto.</span>
+            </section>
+
+            <section t-if="state.history.length" class="quick_stock_history">
+                <div><span>ÚLTIMOS AJUSTES</span><strong><t t-esc="state.history.length"/> en esta sesión</strong></div>
+                <ol>
+                    <li t-foreach="state.history" t-as="item" t-key="item.applied_at + '-' + item.product_id">
+                        <span><strong t-esc="item.product_name"/><small t-esc="item.location_name"/></span>
+                        <b t-att-class="differenceClass(item.difference)">
+                            <t t-if="item.difference > 0">+</t><t t-esc="formatQuantity(item.difference)"/> <small t-esc="item.uom_name"/>
+                        </b>
+                    </li>
+                </ol>
+            </section>
+        </main>
+    </t>
+</templates>

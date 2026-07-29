@@ -38,6 +38,9 @@ Long description of module's purpose
             'shop_customer_auth/static/src/dashboard/executive_dashboard.js',
             'shop_customer_auth/static/src/dashboard/executive_dashboard.xml',
             'shop_customer_auth/static/src/dashboard/executive_dashboard.scss',
+            'shop_customer_auth/static/src/stock/quick_stock_adjustment.js',
+            'shop_customer_auth/static/src/stock/quick_stock_adjustment.xml',
+            'shop_customer_auth/static/src/stock/quick_stock_adjustment.scss',
         ],
     },
 
@@ -47,6 +50,7 @@ Long description of module's purpose
         'security/ir.model.access.csv',
         'data/password_reset_cron.xml',
         'views/executive_dashboard_views.xml',
+        'views/quick_stock_adjustment_views.xml',
         'views/views.xml',
         'views/templates.xml',
     ],
