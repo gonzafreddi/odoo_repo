@@ -140,6 +140,24 @@
 .low_stock_grid button { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem; border: 1px solid #ead9bf; border-radius: .45rem; background: #fffaf0; color: var(--ink); text-align: left; }
 .low_stock_grid span, .low_stock_grid strong, .low_stock_grid small { display: block; }.low_stock_grid small { margin-top: .2rem; color: var(--muted); }.low_stock_grid b { color: #a25f00; font-size: 1.2rem; }
 
-@media (max-width: 1000px) { .dashboard_header { align-items: start; flex-direction: column; }.dashboard_filters { justify-content: start; }.kpi_card { grid-column: span 4; }.kpi_card.is-featured { grid-column: span 8; }.channel_strip { grid-template-columns: repeat(3, 1fr); }.channel_intro { grid-column: 1 / -1; }.low_stock_grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 700px) { .o_shop_executive_dashboard { padding: 1rem; }.dashboard_filters { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }.preset_group { grid-column: 1 / -1; }.preset_group button { flex: 1; }.dashboard_filters input { width: 100%; }.kpi_card, .kpi_card.is-featured { grid-column: span 12; min-height: 7.5rem; }.channel_strip { grid-template-columns: 1fr; }.channel_intro { grid-column: auto; }.analysis_grid { grid-template-columns: 1fr; }.low_stock_grid { grid-template-columns: 1fr; }.comparison_note { text-align: left; } }
+.profitability_kpis { display: grid; grid-template-columns: repeat(12, 1fr); gap: .8rem; margin-top: 1.5rem; }
+.profitability_kpi { grid-column: span 2; min-height: 8rem; padding: 1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
+.profitability_kpi.is-featured { background: var(--ink); color: #fff; border-color: var(--ink); }
+.profitability_kpi.is-featured .kpi_label { color: #aac0c5; }
+.profitability_formula { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; align-items: stretch; gap: .55rem; margin-top: 1rem; }
+.profitability_formula span { display: flex; flex-direction: column; justify-content: center; min-height: 5rem; padding: .8rem; border: 1px solid var(--line); border-radius: .55rem; background: var(--card); color: var(--muted); font-size: .75rem; }
+.profitability_formula b { margin-bottom: .25rem; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; font-weight: 500; }
+.profitability_formula i { align-self: center; color: var(--muted); font-size: 1.3rem; font-style: normal; }
+.profitability_formula .result { background: #eaf3f1; border-color: #bfd8d2; }
+.profitability_panel table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.profitability_panel th, .profitability_panel td { padding: .8rem .6rem; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.profitability_panel th:first-child { text-align: left; white-space: normal; }
+.profitability_panel thead th { border-top: 0; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; }
+.profitability_panel tbody th button { padding: 0; border: 0; background: transparent; color: var(--teal); text-align: left; font-weight: 700; }
+.profitability_panel td.is-positive { color: #168367; font-weight: 700; }
+.profitability_panel td.is-negative { color: #c34c43; font-weight: 700; }
+.profitability_note { margin: 1rem 0 0; color: var(--muted); font-size: .75rem; }
+
+@media (max-width: 1000px) { .dashboard_header { align-items: start; flex-direction: column; }.dashboard_filters { justify-content: start; }.kpi_card { grid-column: span 4; }.kpi_card.is-featured { grid-column: span 8; }.channel_strip { grid-template-columns: repeat(3, 1fr); }.channel_intro { grid-column: 1 / -1; }.low_stock_grid { grid-template-columns: repeat(2, 1fr); } .profitability_kpi { grid-column: span 4; }.profitability_formula { grid-template-columns: 1fr auto 1fr; }.profitability_formula .result { grid-column: span 3; } }
+@media (max-width: 700px) { .o_shop_executive_dashboard { padding: 1rem; }.dashboard_filters { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }.preset_group { grid-column: 1 / -1; }.preset_group button { flex: 1; }.dashboard_filters input { width: 100%; }.kpi_card, .kpi_card.is-featured { grid-column: span 12; min-height: 7.5rem; }.channel_strip { grid-template-columns: 1fr; }.channel_intro { grid-column: auto; }.analysis_grid { grid-template-columns: 1fr; }.low_stock_grid { grid-template-columns: 1fr; }.comparison_note { text-align: left; } .profitability_kpi { grid-column: span 12; }.profitability_formula { grid-template-columns: 1fr; }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: auto; } }
 @media (prefers-reduced-motion: reduce) { .dashboard_spinner { animation: none; }.kpi_card { transition: none; } }

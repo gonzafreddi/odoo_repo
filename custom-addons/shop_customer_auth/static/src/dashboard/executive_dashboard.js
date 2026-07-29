@@ -231,6 +231,23 @@ export class ExecutiveDashboard extends Component {
         ];
     }
 
+    get profitabilityKpis() {
+        const metrics = this.state.data?.metrics || {};
+        const comparisons = this.state.data?.comparisons || {};
+        return [
+            { key: "sales", label: "Ventas netas", value: this.formatMoney(metrics.sales), comparison: comparisons.sales },
+            { key: "cogs", label: "Costo de mercadería vendida", value: this.formatMoney(metrics.cost_of_goods_sold), comparison: comparisons.cost_of_goods_sold, inverse: true },
+            { key: "gross_margin", label: "Margen bruto", value: this.formatMoney(metrics.gross_margin), comparison: comparisons.gross_margin },
+            { key: "gross_margin_percent", label: "Margen bruto %", value: this.formatPercentage(metrics.gross_margin_percent) },
+            { key: "expenses", label: "Gastos", value: this.formatMoney(metrics.expenses), comparison: comparisons.expenses, inverse: true },
+            { key: "operating_result", label: "Resultado operativo", value: this.formatMoney(metrics.operating_result), comparison: comparisons.operating_result, featured: true },
+        ];
+    }
+
+    formatPercentage(value) {
+        return (value || 0).toLocaleString(undefined, { maximumFractionDigits: 1 }) + "%";
+    }
+
     barWidth(value, rows, field) {
         const maximum = Math.max(...rows.map((row) => Math.abs(row[field] || 0)), 1);
         return `${Math.max(2, Math.abs(value || 0) / maximum * 100)}%`;

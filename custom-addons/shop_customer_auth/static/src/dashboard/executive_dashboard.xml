@@ -24,6 +24,7 @@
                 <button t-att-class="state.view === 'overview' ? 'active' : ''" t-on-click="() => this.setView('overview')">Vista ejecutiva</button>
                 <button t-att-class="state.view === 'daily' ? 'active' : ''" t-on-click="() => this.setView('daily')">Resumen diario</button>
                 <button t-att-class="state.view === 'evolution' ? 'active' : ''" t-on-click="() => this.setView('evolution')">Evolución</button>
+                <button t-att-class="state.view === 'profitability' ? 'active' : ''" t-on-click="() => this.setView('profitability')">Rentabilidad</button>
             </nav>
 
             <div t-if="state.view === 'overview' &amp;&amp; state.loading" class="dashboard_status" role="status" aria-live="polite">
@@ -137,6 +138,55 @@
                         <p t-if="!state.data.low_stock.length" class="list_empty">No hay productos con 5 unidades o menos.</p>
                     </div>
                 </section>
+            </t>
+
+            <t t-if="state.view === 'profitability'">
+                <div t-if="state.loading" class="dashboard_status" role="status" aria-live="polite">
+                    <span class="dashboard_spinner" aria-hidden="true"/> Actualizando rentabilidad…
+                </div>
+                <div t-elif="state.error" class="dashboard_error" role="alert">
+                    <strong>No se pudo cargar la rentabilidad.</strong><span t-esc="state.error"/>
+                    <button t-on-click="load">Reintentar</button>
+                </div>
+                <t t-elif="state.data">
+                    <section class="profitability_kpis" aria-label="Indicadores de rentabilidad">
+                        <article t-foreach="profitabilityKpis" t-as="kpi" t-key="kpi.key" t-att-class="'profitability_kpi ' + (kpi.featured ? 'is-featured' : '')">
+                            <span class="kpi_label" t-esc="kpi.label"/>
+                            <strong class="kpi_value" t-esc="kpi.value"/>
+                            <span t-if="kpi.comparison !== undefined" t-att-class="'kpi_comparison ' + comparisonClass(kpi.comparison, kpi.inverse)">
+                                <t t-esc="comparison(kpi.comparison)"/> vs. período anterior
+                            </span>
+                        </article>
+                    </section>
+                    <section class="profitability_formula" aria-label="Composición del resultado operativo">
+                        <span><b t-esc="formatMoney(state.data.metrics.sales)"/> Ventas</span>
+                        <i>−</i><span><b t-esc="formatMoney(state.data.metrics.cost_of_goods_sold)"/> Costo vendido</span>
+                        <i>−</i><span><b t-esc="formatMoney(state.data.metrics.expenses)"/> Gastos</span>
+                        <i>=</i><span class="result"><b t-esc="formatMoney(state.data.metrics.operating_result)"/> Resultado operativo</span>
+                    </section>
+                    <section class="dashboard_panel profitability_panel" aria-labelledby="profitability-ranking-title">
+                        <div class="panel_heading">
+                            <div><span class="section_code">MARGEN</span><h2 id="profitability-ranking-title">Productos más rentables</h2></div>
+                            <span>Ordenados por margen bruto</span>
+                        </div>
+                        <div class="table_scroll">
+                            <table>
+                                <thead><tr><th>Producto</th><th>Ventas</th><th>Costo vendido</th><th>Margen bruto</th><th>Margen %</th><th>Unidades</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="state.data.profitability_products" t-as="row" t-key="row.id">
+                                        <th><button t-on-click="() => this.openProduct(row.id)" t-esc="row.name"/></th>
+                                        <td t-esc="formatMoney(row.sales)"/><td t-esc="formatMoney(row.cost)"/>
+                                        <td t-att-class="comparisonClass(row.margin)" t-esc="formatMoney(row.margin)"/>
+                                        <td t-att-class="comparisonClass(row.margin_percent)" t-esc="formatPercentage(row.margin_percent)"/>
+                                        <td t-esc="formatNumber(row.units)"/>
+                                    </tr>
+                                    <tr t-if="!state.data.profitability_products.length"><td colspan="6">No hay productos vendidos en el período.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="profitability_note">El POS usa su costo histórico calculado por Odoo. Tienda y otras facturas usan el costo estándar vigente de la compañía.</p>
+                    </section>
+                </t>
             </t>
 
             <t t-if="state.view === 'daily'">

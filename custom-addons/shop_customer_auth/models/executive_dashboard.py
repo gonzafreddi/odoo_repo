@@ -64,7 +64,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
             lambda line: line.display_type == "product" and line.product_id
         )
         by_category = defaultdict(lambda: {"amount": 0.0, "units": 0.0})
-        by_product = defaultdict(lambda: {"amount": 0.0, "units": 0.0})
+        by_product = defaultdict(lambda: {"amount": 0.0, "units": 0.0, "cost": 0.0})
         channels = {
             "pos": {"amount": 0.0, "units": 0.0, "document_ids": pos_orders.ids},
             "store": {"amount": 0.0, "units": 0.0, "document_ids": store_orders.ids},
@@ -85,6 +85,9 @@ class ShopExecutiveDashboard(models.AbstractModel):
             by_category[(category.id, category.display_name)]["units"] += quantity
             by_product[(line.product_id.id, line.product_id.display_name)]["amount"] += amount
             by_product[(line.product_id.id, line.product_id.display_name)]["units"] += quantity
+            by_product[(line.product_id.id, line.product_id.display_name)]["cost"] += (
+                quantity * line.product_id.with_company(company).standard_price
+            )
         for order in store_orders:
             conversion_date = fields.Date.to_date(order.date_order)
             for line in order.order_line.filtered(
@@ -106,6 +109,9 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 by_category[(category.id, category.display_name)]["units"] += quantity
                 by_product[(line.product_id.id, line.product_id.display_name)]["amount"] += amount
                 by_product[(line.product_id.id, line.product_id.display_name)]["units"] += quantity
+                by_product[(line.product_id.id, line.product_id.display_name)]["cost"] += (
+                    quantity * line.product_id.with_company(company).standard_price
+                )
         for order in pos_orders:
             conversion_date = fields.Date.to_date(order.date_order)
             for line in order.lines:
@@ -125,11 +131,20 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 by_category[(category.id, category.display_name)]["units"] += quantity
                 by_product[(line.product_id.id, line.product_id.display_name)]["amount"] += amount
                 by_product[(line.product_id.id, line.product_id.display_name)]["units"] += quantity
+                cost = order.currency_id._convert(
+                    line.total_cost,
+                    company.currency_id,
+                    company,
+                    conversion_date,
+                )
+                by_product[(line.product_id.id, line.product_id.display_name)]["cost"] += cost
         channels["other"]["document_ids"] = other_moves.ids
         total = sum(channel["amount"] for channel in channels.values())
         units = sum(channel["units"] for channel in channels.values())
+        cost = sum(values["cost"] for values in by_product.values())
         return {
             "total": total,
+            "cost": cost,
             "units": units,
             "document_count": len(moves) + len(pos_orders) + len(store_orders),
             "move_ids": moves.ids,
@@ -367,10 +382,10 @@ class ShopExecutiveDashboard(models.AbstractModel):
         ]
         product_ranking.sort(key=lambda item: item["amount"], reverse=True)
 
-        operating_result = sales["total"] - purchases["total"] - expenses["total"]
-        previous_result = (
-            previous_sales["total"] - previous_purchases["total"] - previous_expenses["total"]
-        )
+        gross_margin = sales["total"] - sales["cost"]
+        previous_gross_margin = previous_sales["total"] - previous_sales["cost"]
+        operating_result = gross_margin - expenses["total"]
+        previous_result = previous_gross_margin - previous_expenses["total"]
         ticket = sales["total"] / sales["document_count"] if sales["document_count"] else 0.0
         previous_ticket = (
             previous_sales["total"] / previous_sales["document_count"]
@@ -378,6 +393,9 @@ class ShopExecutiveDashboard(models.AbstractModel):
         )
         metrics = {
             "sales": sales["total"],
+            "cost_of_goods_sold": sales["cost"],
+            "gross_margin": gross_margin,
+            "gross_margin_percent": gross_margin / sales["total"] * 100 if sales["total"] else 0.0,
             "expenses": expenses["total"],
             "purchases": purchases["total"],
             "stock_value": stock["total"],
@@ -389,6 +407,8 @@ class ShopExecutiveDashboard(models.AbstractModel):
         }
         comparisons = {
             "sales": self._comparison(sales["total"], previous_sales["total"]),
+            "cost_of_goods_sold": self._comparison(sales["cost"], previous_sales["cost"]),
+            "gross_margin": self._comparison(gross_margin, previous_gross_margin),
             "expenses": self._comparison(expenses["total"], previous_expenses["total"]),
             "purchases": self._comparison(purchases["total"], previous_purchases["total"]),
             "operating_result": self._comparison(operating_result, previous_result),
@@ -417,6 +437,19 @@ class ShopExecutiveDashboard(models.AbstractModel):
                     channel["amount"], previous_channel["amount"]
                 ),
             })
+        profitability_products = []
+        for (product_id, name), values in sales["by_product"].items():
+            margin = values["amount"] - values["cost"]
+            profitability_products.append({
+                "id": product_id,
+                "name": name,
+                "sales": values["amount"],
+                "cost": values["cost"],
+                "margin": margin,
+                "margin_percent": margin / values["amount"] * 100 if values["amount"] else 0.0,
+                "units": values["units"],
+            })
+        profitability_products.sort(key=lambda item: item["margin"], reverse=True)
         return {
             "company": {"id": company.id, "name": company.display_name},
             "currency": {
@@ -439,6 +472,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
             "categories": categories,
             "expense_accounts": expense_accounts,
             "product_ranking": product_ranking[:10],
+            "profitability_products": profitability_products[:20],
             "low_stock": stock["low_stock"],
             "record_ids": {
                 "sales": sales["move_ids"],
