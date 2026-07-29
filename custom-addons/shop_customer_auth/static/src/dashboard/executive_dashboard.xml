@@ -16,13 +16,14 @@
                     </div>
                     <label>Desde<input type="date" t-att-value="state.dateFrom" t-on-change="onDateFrom"/></label>
                     <label>Hasta<input type="date" t-att-value="state.dateTo" t-on-change="onDateTo"/></label>
-                    <button class="apply_button" t-on-click="refresh" t-att-disabled="state.loading || state.dailyLoading">Actualizar</button>
+                    <button class="apply_button" t-on-click="refresh" t-att-disabled="state.loading || state.dailyLoading || state.evolutionLoading">Actualizar</button>
                 </div>
             </header>
 
             <nav class="dashboard_views" aria-label="Vistas del tablero">
                 <button t-att-class="state.view === 'overview' ? 'active' : ''" t-on-click="() => this.setView('overview')">Vista ejecutiva</button>
                 <button t-att-class="state.view === 'daily' ? 'active' : ''" t-on-click="() => this.setView('daily')">Resumen diario</button>
+                <button t-att-class="state.view === 'evolution' ? 'active' : ''" t-on-click="() => this.setView('evolution')">Evolución</button>
             </nav>
 
             <div t-if="state.view === 'overview' &amp;&amp; state.loading" class="dashboard_status" role="status" aria-live="polite">
@@ -153,20 +154,18 @@
                     </div>
                     <div class="table_scroll">
                         <table>
-                            <thead><tr><th>Fecha</th><th>Medios de cobro</th><th>Total</th></tr></thead>
+                            <thead><tr>
+                                <th>Fecha</th>
+                                <th t-foreach="state.dailyData.payment_method_names" t-as="methodName" t-key="methodName" t-esc="methodName"/>
+                                <th>Total</th>
+                            </tr></thead>
                             <tbody>
                                 <tr t-foreach="state.dailyData.rows" t-as="row" t-key="row.date">
                                     <th t-esc="formatDate(row.date)"/>
-                                    <td>
-                                        <div class="daily_methods">
-                                            <span t-foreach="row.payment_methods" t-as="method" t-key="method.name">
-                                                <b t-esc="method.name"/><t t-esc="formatMoney(method.amount)"/>
-                                            </span>
-                                        </div>
-                                    </td>
+                                    <td t-foreach="state.dailyData.payment_method_names" t-as="methodName" t-key="methodName" t-esc="formatMoney(methodAmount(row, methodName))"/>
                                     <td><strong t-esc="formatMoney(row.total)"/></td>
                                 </tr>
-                                <tr t-if="!state.dailyData.rows.length"><td colspan="3">No hay días con ventas en el período seleccionado.</td></tr>
+                                <tr t-if="!state.dailyData.rows.length"><td t-att-colspan="state.dailyData.payment_method_names.length + 2">No hay días con ventas en el período seleccionado.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -175,6 +174,37 @@
                         <div>
                             <button t-on-click="() => this.loadDaily(state.dailyData.pagination.page - 1)" t-att-disabled="state.dailyLoading || state.dailyData.pagination.page &lt;= 1">Anterior</button>
                             <button t-on-click="() => this.loadDaily(state.dailyData.pagination.page + 1)" t-att-disabled="state.dailyLoading || state.dailyData.pagination.page &gt;= state.dailyData.pagination.page_count">Siguiente</button>
+                        </div>
+                    </footer>
+                </section>
+            </t>
+
+            <t t-if="state.view === 'evolution'">
+                <div t-if="state.evolutionLoading" class="dashboard_status" role="status" aria-live="polite">
+                    <span class="dashboard_spinner" aria-hidden="true"/> Preparando evolución…
+                </div>
+                <div t-elif="state.evolutionError" class="dashboard_error" role="alert">
+                    <strong>No se pudo cargar la evolución.</strong><span t-esc="state.evolutionError"/>
+                    <button t-on-click="() => this.loadEvolution(1)">Reintentar</button>
+                </div>
+                <section t-elif="state.evolutionData" class="evolution_view" aria-labelledby="evolution-title">
+                    <div class="daily_sales_heading">
+                        <div><span class="section_code">EVOLUCIÓN</span><h2 id="evolution-title">Ventas por día</h2></div>
+                        <span>Hasta 30 días con ventas por página</span>
+                    </div>
+                    <div t-if="evolutionRows.length" class="bar_chart" role="img" aria-label="Gráfico de barras de ventas diarias">
+                        <div class="bar_column" t-foreach="evolutionRows" t-as="row" t-key="row.date" t-att-title="formatDate(row.date) + ': ' + formatMoney(row.total)">
+                            <span class="bar_value" t-esc="formatMoney(row.total)"/>
+                            <div class="bar_plot"><i t-att-class="row.total &lt; 0 ? 'negative' : ''" t-att-style="'height:' + evolutionBarHeight(row.total)"/></div>
+                            <strong t-esc="formatShortDate(row.date)"/>
+                        </div>
+                    </div>
+                    <div t-else="" class="empty_state"><strong>No hay ventas para graficar.</strong><span>Probá ampliar el período.</span></div>
+                    <footer class="daily_pager" t-if="state.evolutionData.pagination.total_rows">
+                        <span>Página <strong t-esc="state.evolutionData.pagination.page"/> de <strong t-esc="state.evolutionData.pagination.page_count"/></span>
+                        <div>
+                            <button t-on-click="() => this.loadEvolution(state.evolutionData.pagination.page - 1)" t-att-disabled="state.evolutionLoading || state.evolutionData.pagination.page &lt;= 1">Anterior</button>
+                            <button t-on-click="() => this.loadEvolution(state.evolutionData.pagination.page + 1)" t-att-disabled="state.evolutionLoading || state.evolutionData.pagination.page &gt;= state.evolutionData.pagination.page_count">Siguiente</button>
                         </div>
                     </footer>
                 </section>

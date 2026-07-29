@@ -94,8 +94,9 @@
 .daily_sales_heading > div { display: flex; align-items: center; gap: .65rem; }
 .daily_sales_heading h2 { margin: 0; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 1.45rem; font-weight: 500; }
 .daily_sales_view table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.daily_sales_view th, .daily_sales_view td { padding: .85rem .7rem; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+.daily_sales_view th, .daily_sales_view td { padding: .85rem .7rem; border-top: 1px solid var(--line); text-align: right; vertical-align: top; }
 .daily_sales_view th:first-child { width: 9rem; white-space: nowrap; }
+.daily_sales_view th:first-child, .daily_sales_view td:first-child { position: sticky; left: 0; z-index: 1; background: var(--card); text-align: left; }
 .daily_sales_view th:last-child, .daily_sales_view td:last-child { width: 12rem; text-align: right; white-space: nowrap; }
 .daily_sales_view thead th { border-top: 0; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; }
 .daily_methods { display: flex; flex-wrap: wrap; gap: .35rem; }
@@ -105,6 +106,14 @@
 .daily_pager div { display: flex; gap: .4rem; }
 .daily_pager button { padding: .45rem .75rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--card); color: var(--teal); font-weight: 700; }
 .daily_pager button:disabled { color: #9aabaa; background: #f3f6f5; }
+.evolution_view { margin-top: 1.25rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
+.bar_chart { display: flex; align-items: stretch; gap: .45rem; min-height: 23rem; padding: 1rem .4rem .5rem; overflow-x: auto; border-top: 1px solid var(--line); }
+.bar_column { display: grid; grid-template-rows: 2.8rem 1fr 1.8rem; flex: 1 0 3.2rem; min-width: 3.2rem; max-width: 5.5rem; text-align: center; }
+.bar_value { align-self: end; overflow: hidden; color: var(--muted); font-size: .64rem; text-overflow: ellipsis; white-space: nowrap; }
+.bar_plot { display: flex; align-items: end; justify-content: center; min-height: 16rem; margin: .4rem 0; border-bottom: 1px solid #aebfba; background: linear-gradient(to top, rgba(8,127,115,.035) 1px, transparent 1px); background-size: 100% 25%; }
+.bar_plot i { display: block; width: min(2.3rem, 72%); min-height: 0; border-radius: .25rem .25rem 0 0; background: linear-gradient(180deg, #19a08f, var(--teal)); transition: height .3s ease; }
+.bar_plot i.negative { background: linear-gradient(180deg, #d46a5e, #a93d35); }
+.bar_column > strong { color: var(--muted); font: 700 .68rem ui-monospace, monospace; }
 
 .dashboard_panel { margin-top: 1rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
 .panel_heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--muted); font-size: .78rem; }

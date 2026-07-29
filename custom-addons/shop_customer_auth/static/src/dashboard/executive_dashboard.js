@@ -28,6 +28,9 @@ export class ExecutiveDashboard extends Component {
             dailyLoading: false,
             dailyError: null,
             dailyData: null,
+            evolutionLoading: false,
+            evolutionError: null,
+            evolutionData: null,
         });
         onWillStart(() => this.load());
     }
@@ -80,13 +83,21 @@ export class ExecutiveDashboard extends Component {
     }
 
     refresh() {
-        return this.state.view === "daily" ? this.loadDaily(1) : this.load();
+        if (this.state.view === "daily") {
+            return this.loadDaily(1);
+        }
+        if (this.state.view === "evolution") {
+            return this.loadEvolution(1);
+        }
+        return this.load();
     }
 
     async setView(view) {
         this.state.view = view;
         if (view === "daily") {
             await this.loadDaily(1);
+        } else if (view === "evolution") {
+            await this.loadEvolution(1);
         }
     }
 
@@ -122,6 +133,48 @@ export class ExecutiveDashboard extends Component {
             month: "2-digit",
             year: "numeric",
         }).format(new Date(`${value}T00:00:00`));
+    }
+
+    formatShortDate(value) {
+        return new Intl.DateTimeFormat(undefined, {
+            day: "2-digit",
+            month: "2-digit",
+        }).format(new Date(`${value}T00:00:00`));
+    }
+
+    methodAmount(row, methodName) {
+        return row.payment_amounts[methodName] || 0;
+    }
+
+    async loadEvolution(page = 1) {
+        this.state.evolutionLoading = true;
+        this.state.evolutionError = null;
+        try {
+            this.state.evolutionData = await this.orm.call(
+                "shop.executive.dashboard",
+                "get_daily_sales_summary",
+                [],
+                {
+                    date_from: this.state.dateFrom,
+                    date_to: this.state.dateTo,
+                    page,
+                    page_size: 30,
+                }
+            );
+        } catch (error) {
+            this.state.evolutionError = error.data?.message || error.message || "No se pudo cargar la evolución.";
+        } finally {
+            this.state.evolutionLoading = false;
+        }
+    }
+
+    get evolutionRows() {
+        return [...(this.state.evolutionData?.rows || [])].reverse();
+    }
+
+    evolutionBarHeight(value) {
+        const maximum = Math.max(...this.evolutionRows.map((row) => Math.abs(row.total || 0)), 1);
+        return `${Math.max(Math.abs(value || 0) / maximum * 100, value ? 3 : 0)}%`;
     }
 
     formatMoney(value) {

@@ -498,19 +498,26 @@ class ShopExecutiveDashboard(models.AbstractModel):
         page = min(page, page_count)
         offset = (page - 1) * page_size
         rows = []
+        payment_method_names = set()
         for day in ordered_dates[offset:offset + page_size]:
             sales = self._sales_data(day, day)
             methods = self._payment_method_data(sales)
+            method_amounts = {
+                method["name"]: method["amount"] for method in methods
+            }
+            payment_method_names.update(method_amounts)
             rows.append({
                 "date": fields.Date.to_string(day),
                 "payment_methods": [
                     {"name": method["name"], "amount": method["amount"]}
                     for method in methods
                 ],
+                "payment_amounts": method_amounts,
                 "total": sales["total"],
             })
         return {
             "rows": rows,
+            "payment_method_names": sorted(payment_method_names),
             "pagination": {
                 "page": page,
                 "page_size": page_size,
