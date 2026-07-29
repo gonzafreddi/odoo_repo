@@ -16,18 +16,23 @@
                     </div>
                     <label>Desde<input type="date" t-att-value="state.dateFrom" t-on-change="onDateFrom"/></label>
                     <label>Hasta<input type="date" t-att-value="state.dateTo" t-on-change="onDateTo"/></label>
-                    <button class="apply_button" t-on-click="load" t-att-disabled="state.loading">Actualizar</button>
+                    <button class="apply_button" t-on-click="refresh" t-att-disabled="state.loading || state.dailyLoading">Actualizar</button>
                 </div>
             </header>
 
-            <div t-if="state.loading" class="dashboard_status" role="status" aria-live="polite">
+            <nav class="dashboard_views" aria-label="Vistas del tablero">
+                <button t-att-class="state.view === 'overview' ? 'active' : ''" t-on-click="() => this.setView('overview')">Vista ejecutiva</button>
+                <button t-att-class="state.view === 'daily' ? 'active' : ''" t-on-click="() => this.setView('daily')">Resumen diario</button>
+            </nav>
+
+            <div t-if="state.view === 'overview' &amp;&amp; state.loading" class="dashboard_status" role="status" aria-live="polite">
                 <span class="dashboard_spinner" aria-hidden="true"/> Preparando indicadores…
             </div>
-            <div t-elif="state.error" class="dashboard_error" role="alert">
+            <div t-elif="state.view === 'overview' &amp;&amp; state.error" class="dashboard_error" role="alert">
                 <strong>No se pudo cargar el tablero.</strong><span t-esc="state.error"/>
                 <button t-on-click="load">Reintentar</button>
             </div>
-            <t t-elif="state.data">
+            <t t-elif="state.view === 'overview' &amp;&amp; state.data">
                 <section class="kpi_grid" aria-label="Indicadores principales">
                     <button t-foreach="kpis" t-as="kpi" t-key="kpi.key"
                             t-att-class="'kpi_card ' + (kpi.alert ? 'is-alert ' : '') + (kpi.key === 'result' ? 'is-featured' : '')"
@@ -130,6 +135,48 @@
                         </button>
                         <p t-if="!state.data.low_stock.length" class="list_empty">No hay productos con 5 unidades o menos.</p>
                     </div>
+                </section>
+            </t>
+
+            <t t-if="state.view === 'daily'">
+                <div t-if="state.dailyLoading" class="dashboard_status" role="status" aria-live="polite">
+                    <span class="dashboard_spinner" aria-hidden="true"/> Preparando resumen diario…
+                </div>
+                <div t-elif="state.dailyError" class="dashboard_error" role="alert">
+                    <strong>No se pudo cargar el resumen diario.</strong><span t-esc="state.dailyError"/>
+                    <button t-on-click="() => this.loadDaily(1)">Reintentar</button>
+                </div>
+                <section t-elif="state.dailyData" class="daily_sales_view" aria-labelledby="daily-sales-title">
+                    <div class="daily_sales_heading">
+                        <div><span class="section_code">DÍA A DÍA</span><h2 id="daily-sales-title">Ventas resumidas por fecha</h2></div>
+                        <span><t t-esc="state.dailyData.pagination.total_rows"/> días con ventas</span>
+                    </div>
+                    <div class="table_scroll">
+                        <table>
+                            <thead><tr><th>Fecha</th><th>Medios de cobro</th><th>Total</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="state.dailyData.rows" t-as="row" t-key="row.date">
+                                    <th t-esc="formatDate(row.date)"/>
+                                    <td>
+                                        <div class="daily_methods">
+                                            <span t-foreach="row.payment_methods" t-as="method" t-key="method.name">
+                                                <b t-esc="method.name"/><t t-esc="formatMoney(method.amount)"/>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td><strong t-esc="formatMoney(row.total)"/></td>
+                                </tr>
+                                <tr t-if="!state.dailyData.rows.length"><td colspan="3">No hay días con ventas en el período seleccionado.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <footer class="daily_pager" t-if="state.dailyData.pagination.total_rows">
+                        <span>Página <strong t-esc="state.dailyData.pagination.page"/> de <strong t-esc="state.dailyData.pagination.page_count"/></span>
+                        <div>
+                            <button t-on-click="() => this.loadDaily(state.dailyData.pagination.page - 1)" t-att-disabled="state.dailyLoading || state.dailyData.pagination.page &lt;= 1">Anterior</button>
+                            <button t-on-click="() => this.loadDaily(state.dailyData.pagination.page + 1)" t-att-disabled="state.dailyLoading || state.dailyData.pagination.page &gt;= state.dailyData.pagination.page_count">Siguiente</button>
+                        </div>
+                    </footer>
                 </section>
             </t>
         </main>

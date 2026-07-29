@@ -451,3 +451,74 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 "low_stock": [item["id"] for item in stock["low_stock"]],
             },
         }
+
+    @api.model
+    def get_daily_sales_summary(self, date_from, date_to, page=1, page_size=15):
+        self._check_dashboard_access()
+        start, end, _previous_start, _previous_end = self._parse_period(
+            date_from, date_to
+        )
+        company = self.env.company
+        page = max(int(page or 1), 1)
+        page_size = min(max(int(page_size or 15), 5), 50)
+        datetime_from = datetime.combine(start, time.min)
+        datetime_to = datetime.combine(end, time.max)
+
+        pos_orders = self.env["pos.order"].sudo().search([
+            ("company_id", "=", company.id),
+            ("state", "in", ("paid", "done")),
+            ("date_order", ">=", datetime_from),
+            ("date_order", "<=", datetime_to),
+        ])
+        store_orders = self.env["sale.order"].sudo().search([
+            ("company_id", "=", company.id),
+            ("state", "=", "sale"),
+            ("date_order", ">=", datetime_from),
+            ("date_order", "<=", datetime_to),
+        ])
+        invoice_moves = self.env["account.move"].sudo().search([
+            ("company_id", "=", company.id),
+            ("state", "=", "posted"),
+            ("move_type", "in", ("out_invoice", "out_refund")),
+            ("invoice_date", ">=", start),
+            ("invoice_date", "<=", end),
+            ("id", "not in", pos_orders.account_move.ids),
+        ]).filtered(lambda move: not move.invoice_line_ids.sale_line_ids)
+
+        active_dates = {
+            fields.Date.to_date(order.date_order) for order in pos_orders
+        }
+        active_dates.update(
+            fields.Date.to_date(order.date_order) for order in store_orders
+        )
+        active_dates.update(move.invoice_date for move in invoice_moves if move.invoice_date)
+        ordered_dates = sorted(active_dates, reverse=True)
+        total_rows = len(ordered_dates)
+        page_count = max((total_rows + page_size - 1) // page_size, 1)
+        page = min(page, page_count)
+        offset = (page - 1) * page_size
+        rows = []
+        for day in ordered_dates[offset:offset + page_size]:
+            sales = self._sales_data(day, day)
+            methods = self._payment_method_data(sales)
+            rows.append({
+                "date": fields.Date.to_string(day),
+                "payment_methods": [
+                    {"name": method["name"], "amount": method["amount"]}
+                    for method in methods
+                ],
+                "total": sales["total"],
+            })
+        return {
+            "rows": rows,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "page_count": page_count,
+                "total_rows": total_rows,
+            },
+            "currency": {
+                "name": company.currency_id.name,
+                "decimal_places": company.currency_id.decimal_places,
+            },
+        }

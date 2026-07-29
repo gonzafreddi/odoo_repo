@@ -24,6 +24,10 @@ export class ExecutiveDashboard extends Component {
             loading: true,
             error: null,
             data: null,
+            view: "overview",
+            dailyLoading: false,
+            dailyError: null,
+            dailyData: null,
         });
         onWillStart(() => this.load());
     }
@@ -62,7 +66,7 @@ export class ExecutiveDashboard extends Component {
         this.state.preset = preset;
         this.state.dateFrom = localISO(start);
         this.state.dateTo = localISO(today);
-        return this.load();
+        return this.refresh();
     }
 
     onDateFrom(event) {
@@ -73,6 +77,51 @@ export class ExecutiveDashboard extends Component {
     onDateTo(event) {
         this.state.dateTo = event.target.value;
         this.state.preset = "manual";
+    }
+
+    refresh() {
+        return this.state.view === "daily" ? this.loadDaily(1) : this.load();
+    }
+
+    async setView(view) {
+        this.state.view = view;
+        if (view === "daily") {
+            await this.loadDaily(1);
+        }
+    }
+
+    async loadDaily(page = 1) {
+        if (!this.state.dateFrom || !this.state.dateTo || this.state.dateFrom > this.state.dateTo) {
+            this.state.dailyError = "La fecha desde debe ser anterior o igual a la fecha hasta.";
+            return;
+        }
+        this.state.dailyLoading = true;
+        this.state.dailyError = null;
+        try {
+            this.state.dailyData = await this.orm.call(
+                "shop.executive.dashboard",
+                "get_daily_sales_summary",
+                [],
+                {
+                    date_from: this.state.dateFrom,
+                    date_to: this.state.dateTo,
+                    page,
+                    page_size: 15,
+                }
+            );
+        } catch (error) {
+            this.state.dailyError = error.data?.message || error.message || "No se pudo cargar el resumen diario.";
+        } finally {
+            this.state.dailyLoading = false;
+        }
+    }
+
+    formatDate(value) {
+        return new Intl.DateTimeFormat(undefined, {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        }).format(new Date(`${value}T00:00:00`));
     }
 
     formatMoney(value) {

@@ -40,6 +40,9 @@
 .preset_group button { padding: .45rem .7rem; border: 0; border-radius: .35rem; background: transparent; color: var(--muted); }
 .preset_group button.active { background: var(--card); color: var(--teal); box-shadow: 0 1px 4px rgba(23, 43, 53, .12); font-weight: 700; }
 .apply_button, .dashboard_error button { min-height: 2.35rem; padding: .4rem 1rem; border: 1px solid var(--teal); border-radius: .35rem; background: var(--teal); color: #fff; font-weight: 700; }
+.dashboard_views { display: flex; gap: .25rem; margin: 1rem 0 0; padding: .25rem; width: fit-content; border: 1px solid var(--line); border-radius: .5rem; background: #e7eeec; }
+.dashboard_views button { padding: .5rem .85rem; border: 0; border-radius: .35rem; background: transparent; color: var(--muted); font-weight: 700; }
+.dashboard_views button.active { background: var(--card); color: var(--teal); box-shadow: 0 1px 4px rgba(23, 43, 53, .12); }
 
 .dashboard_status, .dashboard_error, .empty_state { display: flex; align-items: center; justify-content: center; gap: .65rem; min-height: 12rem; margin-top: 1.5rem; border: 1px dashed var(--line); border-radius: .75rem; background: rgba(255,255,255,.55); color: var(--muted); }
 .dashboard_error { flex-direction: column; color: #9b372f; }
@@ -86,6 +89,22 @@
 .payment_panel th:first-child { text-align: left; white-space: normal; }
 .payment_panel thead th { border-top: 0; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; }
 .payment_panel tbody tr.is-pending th, .payment_panel tbody tr.is-pending td { background: #fff9ed; }
+.daily_sales_view { margin-top: 1.25rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
+.daily_sales_heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--muted); }
+.daily_sales_heading > div { display: flex; align-items: center; gap: .65rem; }
+.daily_sales_heading h2 { margin: 0; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 1.45rem; font-weight: 500; }
+.daily_sales_view table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.daily_sales_view th, .daily_sales_view td { padding: .85rem .7rem; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+.daily_sales_view th:first-child { width: 9rem; white-space: nowrap; }
+.daily_sales_view th:last-child, .daily_sales_view td:last-child { width: 12rem; text-align: right; white-space: nowrap; }
+.daily_sales_view thead th { border-top: 0; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; }
+.daily_methods { display: flex; flex-wrap: wrap; gap: .35rem; }
+.daily_methods span { display: inline-flex; gap: .4rem; padding: .3rem .5rem; border-radius: .35rem; background: #edf4f2; color: var(--muted); font-size: .76rem; }
+.daily_methods b { color: var(--ink); }
+.daily_pager { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .8rem; }
+.daily_pager div { display: flex; gap: .4rem; }
+.daily_pager button { padding: .45rem .75rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--card); color: var(--teal); font-weight: 700; }
+.daily_pager button:disabled { color: #9aabaa; background: #f3f6f5; }
 
 .dashboard_panel { margin-top: 1rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
 .panel_heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--muted); font-size: .78rem; }
