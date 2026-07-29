@@ -17,7 +17,14 @@ Long description of module's purpose
     'version': '19.0.1.0.0',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'point_of_sale'],
+    'depends': [
+        'base',
+        'sale_management',
+        'purchase',
+        'stock',
+        'account',
+        'point_of_sale',
+    ],
 
     'assets': {
         'point_of_sale._assets_pos': [
@@ -26,6 +33,11 @@ Long description of module's purpose
             'shop_customer_auth/static/src/pos/combo_configurator.xml',
             'shop_customer_auth/static/src/pos/pos_product_list.scss',
         ],
+        'web.assets_backend': [
+            'shop_customer_auth/static/src/dashboard/executive_dashboard.js',
+            'shop_customer_auth/static/src/dashboard/executive_dashboard.xml',
+            'shop_customer_auth/static/src/dashboard/executive_dashboard.scss',
+        ],
     },
 
     # always loaded
@@ -33,6 +45,7 @@ Long description of module's purpose
         'security/password_reset_security.xml',
         'security/ir.model.access.csv',
         'data/password_reset_cron.xml',
+        'views/executive_dashboard_views.xml',
         'views/views.xml',
         'views/templates.xml',
     ],

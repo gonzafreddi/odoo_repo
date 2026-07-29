@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="shop_customer_auth.ExecutiveDashboard">
+        <main class="o_shop_executive_dashboard" aria-labelledby="dashboard-title">
+            <header class="dashboard_header">
+                <div>
+                    <p class="dashboard_eyebrow">Pulso comercial · <t t-esc="state.data?.company?.name || 'Compañía activa'"/></p>
+                    <h1 id="dashboard-title">Tablero ejecutivo</h1>
+                    <p class="dashboard_intro">Una lectura común de ventas, inversión, gastos y disponibilidad.</p>
+                </div>
+                <div class="dashboard_filters" aria-label="Filtros de período">
+                    <div class="preset_group" role="group" aria-label="Períodos rápidos">
+                        <button t-att-class="state.preset === 'month' ? 'active' : ''" t-on-click="() => this.applyPreset('month')">Mes</button>
+                        <button t-att-class="state.preset === 'quarter' ? 'active' : ''" t-on-click="() => this.applyPreset('quarter')">Trimestre</button>
+                        <button t-att-class="state.preset === 'year' ? 'active' : ''" t-on-click="() => this.applyPreset('year')">Año</button>
+                    </div>
+                    <label>Desde<input type="date" t-att-value="state.dateFrom" t-on-change="onDateFrom"/></label>
+                    <label>Hasta<input type="date" t-att-value="state.dateTo" t-on-change="onDateTo"/></label>
+                    <button class="apply_button" t-on-click="load" t-att-disabled="state.loading">Actualizar</button>
+                </div>
+            </header>
+
+            <div t-if="state.loading" class="dashboard_status" role="status" aria-live="polite">
+                <span class="dashboard_spinner" aria-hidden="true"/> Preparando indicadores…
+            </div>
+            <div t-elif="state.error" class="dashboard_error" role="alert">
+                <strong>No se pudo cargar el tablero.</strong><span t-esc="state.error"/>
+                <button t-on-click="load">Reintentar</button>
+            </div>
+            <t t-elif="state.data">
+                <section class="kpi_grid" aria-label="Indicadores principales">
+                    <button t-foreach="kpis" t-as="kpi" t-key="kpi.key"
+                            t-att-class="'kpi_card ' + (kpi.alert ? 'is-alert ' : '') + (kpi.key === 'result' ? 'is-featured' : '')"
+                            t-on-click="() => kpi.action &amp;&amp; this.openRecords(kpi.action)"
+                            t-att-disabled="!kpi.action">
+                        <span class="kpi_label" t-esc="kpi.label"/>
+                        <strong class="kpi_value" t-esc="kpi.value"/>
+                        <span t-if="kpi.snapshot" class="snapshot_badge">Foto actual · no responde al período</span>
+                        <span t-elif="kpi.comparison !== undefined" t-att-class="'kpi_comparison ' + comparisonClass(kpi.comparison, kpi.inverse)">
+                            <t t-esc="comparison(kpi.comparison)"/> vs. período anterior
+                        </span>
+                    </button>
+                </section>
+
+                <p class="comparison_note">Comparación: <t t-esc="state.data.period.previous_from"/> al <t t-esc="state.data.period.previous_to"/> · misma cantidad de días.</p>
+
+                <section class="channel_strip" aria-labelledby="sales-channel-title">
+                    <div class="channel_intro">
+                        <span class="section_code">CANALES</span>
+                        <h2 id="sales-channel-title">De dónde vienen las ventas</h2>
+                        <p>POS se toma del ticket; tienda web, directamente de órdenes de venta confirmadas.</p>
+                    </div>
+                    <button t-foreach="state.data.sales_channels" t-as="channel" t-key="channel.key"
+                            t-on-click="() => this.openRecords(channel.key + '_sales')">
+                        <span t-esc="channel.label"/>
+                        <strong t-esc="formatMoney(channel.amount)"/>
+                        <small><t t-esc="formatNumber(channel.document_count)"/> operaciones · <t t-esc="formatNumber(channel.units)"/> unidades</small>
+                        <em t-att-class="comparisonClass(channel.comparison)"><t t-esc="comparison(channel.comparison)"/> vs. anterior</em>
+                    </button>
+                </section>
+
+                <section class="dashboard_panel payment_panel" aria-labelledby="payment-method-title">
+                    <div class="panel_heading">
+                        <div><span class="section_code">COBROS</span><h2 id="payment-method-title">Ventas por medio de cobro</h2></div>
+                        <span>Importes netos sin impuestos</span>
+                    </div>
+                    <div class="table_scroll">
+                        <table>
+                            <thead><tr><th>Medio de cobro</th><th>Total</th><th>Participación</th><th>POS</th><th>Tienda</th><th>Otras</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="state.data.payment_methods" t-as="method" t-key="method.name" t-att-class="method.pending ? 'is-pending' : ''">
+                                    <th t-esc="method.name"/>
+                                    <td><strong t-esc="formatMoney(method.amount)"/></td>
+                                    <td t-esc="formatPercent(method.amount, state.data.metrics.sales)"/>
+                                    <td t-esc="formatMoney(method.pos)"/>
+                                    <td t-esc="formatMoney(method.store)"/>
+                                    <td t-esc="formatMoney(method.other)"/>
+                                </tr>
+                                <tr t-if="!state.data.payment_methods.length"><td colspan="6">No hay ventas ni cobros para el período.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <div t-if="!state.data.categories.length &amp;&amp; !state.data.expense_accounts.length" class="empty_state">
+                    <strong>No hay movimientos en este período.</strong>
+                    <span>Probá ampliar las fechas. La foto de stock sigue disponible en los indicadores.</span>
+                </div>
+
+                <section class="dashboard_panel category_panel">
+                    <div class="panel_heading"><div><span class="section_code">MIX</span><h2>Desempeño por categoría</h2></div><span>Importes en <t t-esc="state.data.currency.name"/></span></div>
+                    <div class="table_scroll">
+                        <table>
+                            <thead><tr><th>Categoría</th><th>Ventas</th><th>Compras</th><th>Stock actual</th><th>Vendidas</th><th>Disponibles</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="state.data.categories" t-as="row" t-key="row.id">
+                                    <th t-esc="row.name"/><td t-esc="formatMoney(row.sales)"/><td t-esc="formatMoney(row.purchases)"/><td t-esc="formatMoney(row.stock_value)"/><td t-esc="formatNumber(row.units_sold)"/><td t-esc="formatNumber(row.units_available)"/>
+                                </tr>
+                                <tr t-if="!state.data.categories.length"><td colspan="6">Sin categorías con actividad o stock.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <div class="analysis_grid">
+                    <section class="dashboard_panel">
+                        <div class="panel_heading"><div><span class="section_code">TOP 10</span><h2>Productos por ventas</h2></div></div>
+                        <ol class="rank_list">
+                            <li t-foreach="state.data.product_ranking" t-as="row" t-key="row.id">
+                                <button t-on-click="() => this.openProduct(row.id)"><span class="rank_name" t-esc="row.name"/><span t-esc="formatMoney(row.amount)"/></button>
+                                <span class="bar_track"><i t-att-style="'width:' + barWidth(row.amount, state.data.product_ranking, 'amount')"/></span>
+                            </li>
+                            <li t-if="!state.data.product_ranking.length" class="list_empty">Sin ventas de productos.</li>
+                        </ol>
+                    </section>
+                    <section class="dashboard_panel">
+                        <div class="panel_heading"><div><span class="section_code">P&amp;L</span><h2>Gastos por cuenta</h2></div></div>
+                        <ul class="account_list">
+                            <li t-foreach="state.data.expense_accounts" t-as="row" t-key="row.id"><span t-esc="row.name"/><strong t-esc="formatMoney(row.amount)"/></li>
+                            <li t-if="!state.data.expense_accounts.length" class="list_empty">Sin gastos contabilizados.</li>
+                        </ul>
+                    </section>
+                </div>
+
+                <section class="dashboard_panel alert_panel">
+                    <div class="panel_heading"><div><span class="section_code">≤ 5</span><h2>Radar de reposición</h2></div><button t-if="state.data.low_stock.length" t-on-click="() => this.openRecords('low_stock')">Ver todos en Odoo</button></div>
+                    <div class="low_stock_grid">
+                        <button t-foreach="state.data.low_stock" t-as="item" t-key="item.id" t-on-click="() => this.openProduct(item.id)">
+                            <span><strong t-esc="item.name"/><small t-esc="item.category"/></span><b t-esc="formatNumber(item.available)"/>
+                        </button>
+                        <p t-if="!state.data.low_stock.length" class="list_empty">No hay productos con 5 unidades o menos.</p>
+                    </div>
+                </section>
+            </t>
+        </main>
+    </t>
+</templates>
