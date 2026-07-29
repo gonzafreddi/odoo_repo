@@ -384,8 +384,12 @@ class ShopExecutiveDashboard(models.AbstractModel):
 
         gross_margin = sales["total"] - sales["cost"]
         previous_gross_margin = previous_sales["total"] - previous_sales["cost"]
-        operating_result = gross_margin - expenses["total"]
-        previous_result = previous_gross_margin - previous_expenses["total"]
+        profitability_operating_result = gross_margin - expenses["total"]
+        previous_profitability_result = previous_gross_margin - previous_expenses["total"]
+        operating_result = sales["total"] - purchases["total"] - expenses["total"]
+        previous_result = (
+            previous_sales["total"] - previous_purchases["total"] - previous_expenses["total"]
+        )
         ticket = sales["total"] / sales["document_count"] if sales["document_count"] else 0.0
         previous_ticket = (
             previous_sales["total"] / previous_sales["document_count"]
@@ -396,6 +400,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
             "cost_of_goods_sold": sales["cost"],
             "gross_margin": gross_margin,
             "gross_margin_percent": gross_margin / sales["total"] * 100 if sales["total"] else 0.0,
+            "profitability_operating_result": profitability_operating_result,
             "expenses": expenses["total"],
             "purchases": purchases["total"],
             "stock_value": stock["total"],
@@ -409,6 +414,9 @@ class ShopExecutiveDashboard(models.AbstractModel):
             "sales": self._comparison(sales["total"], previous_sales["total"]),
             "cost_of_goods_sold": self._comparison(sales["cost"], previous_sales["cost"]),
             "gross_margin": self._comparison(gross_margin, previous_gross_margin),
+            "profitability_operating_result": self._comparison(
+                profitability_operating_result, previous_profitability_result
+            ),
             "expenses": self._comparison(expenses["total"], previous_expenses["total"]),
             "purchases": self._comparison(purchases["total"], previous_purchases["total"]),
             "operating_result": self._comparison(operating_result, previous_result),

@@ -158,11 +158,12 @@
                             </span>
                         </article>
                     </section>
+                    <p class="profitability_explanation">Esta vista calcula la rentabilidad descontando de las ventas el costo de la mercadería efectivamente vendida y los gastos. A diferencia de la Vista ejecutiva, no resta las compras del período, porque comprar mercadería aumenta el stock y no representa un costo hasta que esa mercadería se vende.</p>
                     <section class="profitability_formula" aria-label="Composición del resultado operativo">
                         <span><b t-esc="formatMoney(state.data.metrics.sales)"/> Ventas</span>
                         <i>−</i><span><b t-esc="formatMoney(state.data.metrics.cost_of_goods_sold)"/> Costo vendido</span>
                         <i>−</i><span><b t-esc="formatMoney(state.data.metrics.expenses)"/> Gastos</span>
-                        <i>=</i><span class="result"><b t-esc="formatMoney(state.data.metrics.operating_result)"/> Resultado operativo</span>
+                        <i>=</i><span class="result"><b t-esc="formatMoney(state.data.metrics.profitability_operating_result)"/> Resultado operativo</span>
                     </section>
                     <section class="dashboard_panel profitability_panel" aria-labelledby="profitability-ranking-title">
                         <div class="panel_heading">

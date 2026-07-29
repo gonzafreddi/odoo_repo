@@ -240,7 +240,7 @@ export class ExecutiveDashboard extends Component {
             { key: "gross_margin", label: "Margen bruto", value: this.formatMoney(metrics.gross_margin), comparison: comparisons.gross_margin },
             { key: "gross_margin_percent", label: "Margen bruto %", value: this.formatPercentage(metrics.gross_margin_percent) },
             { key: "expenses", label: "Gastos", value: this.formatMoney(metrics.expenses), comparison: comparisons.expenses, inverse: true },
-            { key: "operating_result", label: "Resultado operativo", value: this.formatMoney(metrics.operating_result), comparison: comparisons.operating_result, featured: true },
+            { key: "profitability_operating_result", label: "Resultado operativo", value: this.formatMoney(metrics.profitability_operating_result), comparison: comparisons.profitability_operating_result, featured: true },
         ];
     }
 
