@@ -15,13 +15,6 @@ class ShopExecutiveDashboard(models.AbstractModel):
         "account.group_account_manager",
         "base.group_system",
     )
-    _EXPENSE_TYPES = (
-        "expense",
-        "expense_other",
-        "expense_depreciation",
-        "expense_direct_cost",
-    )
-
     @api.model
     def _check_dashboard_access(self):
         if not any(self.env.user.has_group(group) for group in self._ALLOWED_GROUPS):
@@ -268,20 +261,27 @@ class ShopExecutiveDashboard(models.AbstractModel):
     @api.model
     def _expense_data(self, start, end):
         company = self.env.company
-        lines = self.env["account.move.line"].sudo().search([
+        expenses = self.env["hr.expense"].sudo().search([
             ("company_id", "=", company.id),
-            ("move_id.state", "=", "posted"),
+            ("state", "in", ("posted", "in_payment", "paid")),
             ("date", ">=", start),
             ("date", "<=", end),
-            ("account_id.account_type", "in", self._EXPENSE_TYPES),
-            ("display_type", "not in", ("line_section", "line_note")),
         ])
         by_account = defaultdict(float)
         total = 0.0
-        for line in lines:
-            total += line.balance
-            by_account[(line.account_id.id, line.account_id.display_name)] += line.balance
-        return {"total": total, "line_ids": lines.ids, "by_account": by_account}
+        for expense in expenses:
+            total += expense.total_amount
+            account = expense.account_id
+            account_key = (
+                account.id or 0,
+                account.display_name or _("Sin cuenta contable"),
+            )
+            by_account[account_key] += expense.total_amount
+        return {
+            "total": total,
+            "expense_ids": expenses.ids,
+            "by_account": by_account,
+        }
 
     @api.model
     def _stock_data(self):
@@ -445,7 +445,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 "pos_sales": sales["channels"]["pos"]["document_ids"],
                 "store_sales": sales["channels"]["store"]["document_ids"],
                 "other_sales": sales["channels"]["other"]["document_ids"],
-                "expenses": expenses["line_ids"],
+                "expenses": expenses["expense_ids"],
                 "purchases": purchases["order_ids"],
                 "stock": stock["product_ids"],
                 "low_stock": [item["id"] for item in stock["low_stock"]],

@@ -114,7 +114,7 @@
                         </ol>
                     </section>
                     <section class="dashboard_panel">
-                        <div class="panel_heading"><div><span class="section_code">P&amp;L</span><h2>Gastos por cuenta</h2></div></div>
+                        <div class="panel_heading"><div><span class="section_code">GASTOS</span><h2>Gastos registrados por cuenta</h2></div></div>
                         <ul class="account_list">
                             <li t-foreach="state.data.expense_accounts" t-as="row" t-key="row.id"><span t-esc="row.name"/><strong t-esc="formatMoney(row.amount)"/></li>
                             <li t-if="!state.data.expense_accounts.length" class="list_empty">Sin gastos contabilizados.</li>

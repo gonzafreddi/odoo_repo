@@ -23,6 +23,7 @@ Long description of module's purpose
         'purchase',
         'stock',
         'account',
+        'hr_expense',
         'point_of_sale',
     ],
 

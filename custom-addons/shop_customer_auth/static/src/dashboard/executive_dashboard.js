@@ -118,7 +118,7 @@ export class ExecutiveDashboard extends Component {
         const comparisons = this.state.data?.comparisons || {};
         return [
             { key: "sales", label: "Ventas", value: this.formatMoney(metrics.sales), comparison: comparisons.sales },
-            { key: "expenses", label: "Gastos contables", value: this.formatMoney(metrics.expenses), comparison: comparisons.expenses, inverse: true, action: "expenses" },
+            { key: "expenses", label: "Gastos registrados", value: this.formatMoney(metrics.expenses), comparison: comparisons.expenses, inverse: true, action: "expenses" },
             { key: "purchases", label: "Compras / inversión", value: this.formatMoney(metrics.purchases), comparison: comparisons.purchases, inverse: true, action: "purchases" },
             { key: "stock", label: "Stock a precio de venta", value: this.formatMoney(metrics.stock_value), snapshot: true, action: "stock" },
             { key: "result", label: "Resultado operativo estimado", value: this.formatMoney(metrics.operating_result), comparison: comparisons.operating_result },
@@ -138,7 +138,7 @@ export class ExecutiveDashboard extends Component {
         const ids = this.state.data.record_ids[kind] || [];
         const actions = {
             sales: { name: "Comprobantes de venta", res_model: "account.move", views: [[false, "list"], [false, "form"]] },
-            expenses: { name: "Apuntes de gastos", res_model: "account.move.line", views: [[false, "list"], [false, "form"]] },
+            expenses: { name: "Gastos registrados", res_model: "hr.expense", views: [[false, "list"], [false, "form"]] },
             purchases: { name: "Órdenes de compra", res_model: "purchase.order", views: [[false, "list"], [false, "form"]] },
             stock: { name: "Productos almacenables", res_model: "product.product", views: [[false, "list"], [false, "form"]] },
             low_stock: { name: "Productos con stock bajo", res_model: "product.product", views: [[false, "list"], [false, "form"]] },
