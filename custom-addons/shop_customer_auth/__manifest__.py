@@ -51,6 +51,7 @@ Long description of module's purpose
         'data/password_reset_cron.xml',
         'views/executive_dashboard_views.xml',
         'views/quick_stock_adjustment_views.xml',
+        'views/product_template_views.xml',
         'views/views.xml',
         'views/templates.xml',
     ],
