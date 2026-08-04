@@ -27,13 +27,17 @@
         <xpath expr="//div[hasclass('rightpane')]//ProductCard" position="attributes">
             <attribute name="class">state.productViewMode === 'list' ? 'shop-pos-product-card shop-pos-product-card--list' : 'flex-column shop-pos-product-card shop-pos-product-card--grid'</attribute>
             <attribute name="price">getProductPrice(product)</attribute>
+            <attribute name="originalPrice">getProductOriginalPrice(product)</attribute>
         </xpath>
     </t>
 
     <t t-name="shop_customer_auth.ProductCard" t-inherit="point_of_sale.ProductCard" t-inherit-mode="extension">
         <xpath expr="//div[hasclass(&apos;product-content&apos;)]" position="after">
-            <span t-if="props.price" class="shop-pos-product-price fw-bolder text-nowrap"
-                t-esc="props.price"/>
+            <div t-if="props.price" class="shop-pos-product-price text-nowrap">
+                <span class="fw-bolder" t-esc="props.price"/>
+                <del t-if="props.originalPrice" class="shop-pos-product-original-price text-muted ms-1"
+                    t-esc="props.originalPrice"/>
+            </div>
         </xpath>
     </t>
 </templates>

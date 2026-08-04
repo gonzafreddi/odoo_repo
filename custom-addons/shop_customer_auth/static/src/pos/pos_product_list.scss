@@ -66,7 +66,14 @@
     }
 
     .shop-pos-product-card--grid .shop-pos-product-price {
-        display: none;
+        padding: 0 0.5rem 0.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+
+    .shop-pos-product-original-price {
+        font-size: 0.8em;
+        font-weight: normal;
     }
 }
 

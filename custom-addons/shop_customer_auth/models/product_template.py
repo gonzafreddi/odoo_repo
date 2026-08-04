@@ -32,3 +32,8 @@ class ProductTemplate(models.Model):
         currency_field="currency_id",
         help="Precio promocional que se aplica cuando la oferta está activa.",
     )
+
+    @api.model
+    def _load_pos_data_fields(self, config_id):
+        fields_to_load = super()._load_pos_data_fields(config_id)
+        return [*fields_to_load, "offer_active", "offer_price"]
