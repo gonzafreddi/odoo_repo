@@ -52,6 +52,7 @@ Long description of module's purpose
         'views/executive_dashboard_views.xml',
         'views/quick_stock_adjustment_views.xml',
         'views/product_template_views.xml',
+        'views/product_category_views.xml',
         'views/views.xml',
         'views/templates.xml',
     ],
