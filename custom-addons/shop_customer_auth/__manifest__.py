@@ -19,6 +19,7 @@ Long description of module's purpose
     # any module necessary for this one to work correctly
     'depends': [
         'base',
+        'contacts',
         'sale_management',
         'purchase',
         'stock',
@@ -33,6 +34,9 @@ Long description of module's purpose
             'shop_customer_auth/static/src/pos/product_screen.xml',
             'shop_customer_auth/static/src/pos/combo_configurator.xml',
             'shop_customer_auth/static/src/pos/pos_product_list.scss',
+            'shop_customer_auth/static/src/pos/customer_account.js',
+            'shop_customer_auth/static/src/pos/customer_account.xml',
+            'shop_customer_auth/static/src/pos/customer_account.scss',
         ],
         'web.assets_backend': [
             'shop_customer_auth/static/src/dashboard/executive_dashboard.js',
@@ -49,6 +53,11 @@ Long description of module's purpose
         'security/password_reset_security.xml',
         'security/ir.model.access.csv',
         'data/password_reset_cron.xml',
+        'views/customer_account_views.xml',
+        'views/register_customer_payment_views.xml',
+        'views/res_partner_customer_account_views.xml',
+        'views/pos_payment_method_customer_account_views.xml',
+        'views/customer_account_menu.xml',
         'views/executive_dashboard_views.xml',
         'views/quick_stock_adjustment_views.xml',
         'views/product_template_views.xml',

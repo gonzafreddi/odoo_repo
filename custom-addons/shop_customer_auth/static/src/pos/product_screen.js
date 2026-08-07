@@ -11,6 +11,7 @@ patch(ProductCard, {
         ...ProductCard.props,
         price: { type: String, optional: true },
         originalPrice: { type: String, optional: true },
+        description: { type: [String, Boolean], optional: true },
     },
 });
 

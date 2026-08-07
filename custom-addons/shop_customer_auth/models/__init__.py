@@ -4,3 +4,7 @@ from . import executive_dashboard
 from . import product_template
 from . import product_category
 from . import quick_stock_adjustment
+from . import customer_account_move
+from . import res_partner
+from . import pos_payment_method
+from . import pos_order

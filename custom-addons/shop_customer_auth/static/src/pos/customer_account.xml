@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="shop_customer_auth.SelectPartnerCustomerAccount"
+       t-inherit="point_of_sale.SelectPartnerButton" t-inherit-mode="extension">
+        <xpath expr="//div[@t-if='props.partner']" position="replace">
+            <div t-if="props.partner" class="shop-pos-partner-account text-truncate">
+                <div t-esc="props.partner.name" class="text-truncate text-action"/>
+                <small>
+                    CC: <t t-esc="formatCustomerAccountAmount(props.partner.current_account_balance)"/>
+                    <t t-if="props.partner.credit_limit &gt; 0">
+                        · Disponible:
+                        <t t-esc="formatCustomerAccountAmount(props.partner.available_credit)"/>
+                    </t>
+                </small>
+            </div>
+        </xpath>
+    </t>
+</templates>

@@ -28,10 +28,15 @@
             <attribute name="class">state.productViewMode === 'list' ? 'shop-pos-product-card shop-pos-product-card--list' : 'flex-column shop-pos-product-card shop-pos-product-card--grid'</attribute>
             <attribute name="price">getProductPrice(product)</attribute>
             <attribute name="originalPrice">getProductOriginalPrice(product)</attribute>
+            <attribute name="description">product.description_sale</attribute>
         </xpath>
     </t>
 
     <t t-name="shop_customer_auth.ProductCard" t-inherit="point_of_sale.ProductCard" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass(&apos;product-name&apos;)]" position="after">
+            <div t-if="props.description" class="shop-pos-product-description text-muted"
+                t-esc="props.description"/>
+        </xpath>
         <xpath expr="//div[hasclass(&apos;product-content&apos;)]" position="after">
             <div t-if="props.price" class="shop-pos-product-price text-nowrap">
                 <span class="fw-bolder" t-esc="props.price"/>
