@@ -1,22 +1,14 @@
 {
     'name': "shop_customer_auth",
-
-    'summary': "Short (1 phrase/line) summary of the module's purpose",
-
+    'summary': "Autenticación, operaciones comerciales y cobros de tienda",
     'description': """
-Long description of module's purpose
+Autenticación de clientes, operaciones de tienda, POS y cobros web.
     """,
-
     'author': "My Company",
     'website': "https://www.yourcompany.com",
-
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Uncategorized',
-    'version': '19.0.1.0.0',
-
-    # any module necessary for this one to work correctly
+    'version': '19.0.1.1.0',
+    'license': 'LGPL-3',
     'depends': [
         'base',
         'contacts',
@@ -26,8 +18,8 @@ Long description of module's purpose
         'account',
         'hr_expense',
         'point_of_sale',
+        'website_sale',
     ],
-
     'assets': {
         'point_of_sale._assets_pos': [
             'shop_customer_auth/static/src/pos/product_screen.js',
@@ -47,12 +39,11 @@ Long description of module's purpose
             'shop_customer_auth/static/src/stock/quick_stock_adjustment.scss',
         ],
     },
-
-    # always loaded
     'data': [
         'security/password_reset_security.xml',
         'security/ir.model.access.csv',
         'data/password_reset_cron.xml',
+        'data/product_defaults.xml',
         'views/customer_account_views.xml',
         'views/register_customer_payment_views.xml',
         'views/res_partner_customer_account_views.xml',
@@ -64,9 +55,8 @@ Long description of module's purpose
         'views/product_category_views.xml',
         'views/views.xml',
         'views/templates.xml',
+        'views/sale_order_payment_views.xml',
+        'views/website_sale_portal_templates.xml',
     ],
-    # only loaded in demonstration mode
-    'demo': [
-        'demo/demo.xml',
-    ],
+    'demo': ['demo/demo.xml'],
 }

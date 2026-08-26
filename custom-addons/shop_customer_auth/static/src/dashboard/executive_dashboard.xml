@@ -16,13 +16,14 @@
                     </div>
                     <label>Desde<input type="date" t-att-value="state.dateFrom" t-on-change="onDateFrom"/></label>
                     <label>Hasta<input type="date" t-att-value="state.dateTo" t-on-change="onDateTo"/></label>
-                    <button class="apply_button" t-on-click="refresh" t-att-disabled="state.loading || state.dailyLoading || state.evolutionLoading">Actualizar</button>
+                    <button class="apply_button" t-on-click="refresh" t-att-disabled="state.loading || state.dailyLoading || state.webDailyLoading || state.evolutionLoading">Actualizar</button>
                 </div>
             </header>
 
             <nav class="dashboard_views" aria-label="Vistas del tablero">
                 <button t-att-class="state.view === 'overview' ? 'active' : ''" t-on-click="() => this.setView('overview')">Vista ejecutiva</button>
                 <button t-att-class="state.view === 'daily' ? 'active' : ''" t-on-click="() => this.setView('daily')">Resumen diario</button>
+                <button t-att-class="state.view === 'webDaily' ? 'active' : ''" t-on-click="() => this.setView('webDaily')">Resumen diario web</button>
                 <button t-att-class="state.view === 'evolution' ? 'active' : ''" t-on-click="() => this.setView('evolution')">Evolución</button>
                 <button t-att-class="state.view === 'profitability' ? 'active' : ''" t-on-click="() => this.setView('profitability')">Rentabilidad</button>
             </nav>
@@ -225,6 +226,46 @@
                         <div>
                             <button t-on-click="() => this.loadDaily(state.dailyData.pagination.page - 1)" t-att-disabled="state.dailyLoading || state.dailyData.pagination.page &lt;= 1">Anterior</button>
                             <button t-on-click="() => this.loadDaily(state.dailyData.pagination.page + 1)" t-att-disabled="state.dailyLoading || state.dailyData.pagination.page &gt;= state.dailyData.pagination.page_count">Siguiente</button>
+                        </div>
+                    </footer>
+                </section>
+            </t>
+
+            <t t-if="state.view === 'webDaily'">
+                <div t-if="state.webDailyLoading" class="dashboard_status" role="status" aria-live="polite">
+                    <span class="dashboard_spinner" aria-hidden="true"/> Preparando resumen diario web…
+                </div>
+                <div t-elif="state.webDailyError" class="dashboard_error" role="alert">
+                    <strong>No se pudo cargar el resumen diario web.</strong><span t-esc="state.webDailyError"/>
+                    <button t-on-click="() => this.loadWebDaily(1)">Reintentar</button>
+                </div>
+                <section t-elif="state.webDailyData" class="daily_sales_view" aria-labelledby="daily-web-sales-title">
+                    <div class="daily_sales_heading">
+                        <div><span class="section_code">COBROS WEB</span><h2 id="daily-web-sales-title">Resumen diario web</h2></div>
+                        <span><t t-esc="state.webDailyData.pagination.total_rows"/> días con cobros</span>
+                    </div>
+                    <div class="table_scroll">
+                        <table>
+                            <thead><tr>
+                                <th>Fecha de cobro</th>
+                                <th t-foreach="state.webDailyData.payment_method_names" t-as="methodName" t-key="methodName" t-esc="methodName"/>
+                                <th>Total cobrado</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="state.webDailyData.rows" t-as="row" t-key="row.date">
+                                    <th t-esc="formatDate(row.date)"/>
+                                    <td t-foreach="state.webDailyData.payment_method_names" t-as="methodName" t-key="methodName" t-esc="formatMoney(methodAmount(row, methodName))"/>
+                                    <td><strong t-esc="formatMoney(row.total)"/></td>
+                                </tr>
+                                <tr t-if="!state.webDailyData.rows.length"><td t-att-colspan="state.webDailyData.payment_method_names.length + 2">No hay cobros web confirmados en el período seleccionado.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <footer class="daily_pager" t-if="state.webDailyData.pagination.total_rows">
+                        <span>Página <strong t-esc="state.webDailyData.pagination.page"/> de <strong t-esc="state.webDailyData.pagination.page_count"/></span>
+                        <div>
+                            <button t-on-click="() => this.loadWebDaily(state.webDailyData.pagination.page - 1)" t-att-disabled="state.webDailyLoading || state.webDailyData.pagination.page &lt;= 1">Anterior</button>
+                            <button t-on-click="() => this.loadWebDaily(state.webDailyData.pagination.page + 1)" t-att-disabled="state.webDailyLoading || state.webDailyData.pagination.page &gt;= state.webDailyData.pagination.page_count">Siguiente</button>
                         </div>
                     </footer>
                 </section>

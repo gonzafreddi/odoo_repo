@@ -8,3 +8,4 @@ from . import customer_account_move
 from . import res_partner
 from . import pos_payment_method
 from . import pos_order
+from . import sale_order_payment

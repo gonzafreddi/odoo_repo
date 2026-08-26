@@ -204,20 +204,19 @@ class ShopExecutiveDashboard(models.AbstractModel):
             total_with_tax = abs(order.currency_id._convert(
                 order.amount_total, company.currency_id, company, date
             ))
-            payments = order.invoice_ids.filtered(
-                lambda move: move.state == "posted"
-            )._get_reconciled_payments()
+            payments = order.web_payment_ids.filtered(
+                lambda payment: payment.state == "confirmed"
+            )
             allocated = 0.0
             for payment in payments:
-                ratio = min(abs(payment.amount_company_currency_signed) / total_with_tax, 1.0) if total_with_tax else 0.0
-                amount = sale_amount * ratio
-                label = " · ".join(filter(None, (
-                    payment.journal_id.display_name,
-                    payment.payment_method_line_id.name,
-                )))
-                add(label or _("Cobro contable"), amount, "store")
+                payment_amount = abs(order.currency_id._convert(
+                    payment.amount, company.currency_id, company, payment.date
+                ))
+                ratio = min(payment_amount / total_with_tax, 1.0) if total_with_tax else 0.0
+                amount = min(sale_amount * ratio, sale_amount - allocated)
+                add(payment.payment_method_id.display_name, amount, "store")
                 allocated += amount
-            add(pending_label, sale_amount - min(allocated, sale_amount), "store")
+            add(pending_label, max(sale_amount - allocated, 0.0), "store")
 
         other_moves = self.env["account.move"].sudo().browse(
             sales["channels"]["other"]["document_ids"]
@@ -429,7 +428,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
         sales_channels = []
         channel_labels = {
             "pos": _("POS"),
-            "store": _("Tienda"),
+            "store": _("Web"),
             "other": _("Otras ventas facturadas"),
         }
         for key in ("pos", "store", "other"):
@@ -556,6 +555,59 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 ],
                 "payment_amounts": method_amounts,
                 "total": sales["total"],
+            })
+        return {
+            "rows": rows,
+            "payment_method_names": sorted(payment_method_names),
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "page_count": page_count,
+                "total_rows": total_rows,
+            },
+            "currency": {
+                "name": company.currency_id.name,
+                "decimal_places": company.currency_id.decimal_places,
+            },
+        }
+
+    @api.model
+    def get_daily_web_payment_summary(
+        self, date_from, date_to, page=1, page_size=15
+    ):
+        self._check_dashboard_access()
+        start, end, _previous_start, _previous_end = self._parse_period(
+            date_from, date_to
+        )
+        company = self.env.company
+        page = max(int(page or 1), 1)
+        page_size = min(max(int(page_size or 15), 5), 50)
+        payments = self.env["shop.sale.payment"].sudo().search([
+            ("company_id", "=", company.id),
+            ("state", "=", "confirmed"),
+            ("date", ">=", start),
+            ("date", "<=", end),
+        ])
+        ordered_dates = sorted(set(payments.mapped("date")), reverse=True)
+        total_rows = len(ordered_dates)
+        page_count = max((total_rows + page_size - 1) // page_size, 1)
+        page = min(page, page_count)
+        offset = (page - 1) * page_size
+        rows = []
+        payment_method_names = set()
+        for day in ordered_dates[offset:offset + page_size]:
+            day_payments = payments.filtered(lambda payment: payment.date == day)
+            payment_amounts = {}
+            for payment in day_payments:
+                method_name = payment.payment_method_id.display_name
+                payment_amounts[method_name] = (
+                    payment_amounts.get(method_name, 0.0) + payment.amount
+                )
+            payment_method_names.update(payment_amounts)
+            rows.append({
+                "date": fields.Date.to_string(day),
+                "payment_amounts": payment_amounts,
+                "total": sum(payment_amounts.values()),
             })
         return {
             "rows": rows,

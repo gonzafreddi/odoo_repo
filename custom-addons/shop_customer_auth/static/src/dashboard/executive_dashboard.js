@@ -28,6 +28,9 @@ export class ExecutiveDashboard extends Component {
             dailyLoading: false,
             dailyError: null,
             dailyData: null,
+            webDailyLoading: false,
+            webDailyError: null,
+            webDailyData: null,
             evolutionLoading: false,
             evolutionError: null,
             evolutionData: null,
@@ -86,6 +89,9 @@ export class ExecutiveDashboard extends Component {
         if (this.state.view === "daily") {
             return this.loadDaily(1);
         }
+        if (this.state.view === "webDaily") {
+            return this.loadWebDaily(1);
+        }
         if (this.state.view === "evolution") {
             return this.loadEvolution(1);
         }
@@ -96,6 +102,8 @@ export class ExecutiveDashboard extends Component {
         this.state.view = view;
         if (view === "daily") {
             await this.loadDaily(1);
+        } else if (view === "webDaily") {
+            await this.loadWebDaily(1);
         } else if (view === "evolution") {
             await this.loadEvolution(1);
         }
@@ -124,6 +132,32 @@ export class ExecutiveDashboard extends Component {
             this.state.dailyError = error.data?.message || error.message || "No se pudo cargar el resumen diario.";
         } finally {
             this.state.dailyLoading = false;
+        }
+    }
+
+    async loadWebDaily(page = 1) {
+        if (!this.state.dateFrom || !this.state.dateTo || this.state.dateFrom > this.state.dateTo) {
+            this.state.webDailyError = "La fecha desde debe ser anterior o igual a la fecha hasta.";
+            return;
+        }
+        this.state.webDailyLoading = true;
+        this.state.webDailyError = null;
+        try {
+            this.state.webDailyData = await this.orm.call(
+                "shop.executive.dashboard",
+                "get_daily_web_payment_summary",
+                [],
+                {
+                    date_from: this.state.dateFrom,
+                    date_to: this.state.dateTo,
+                    page,
+                    page_size: 15,
+                }
+            );
+        } catch (error) {
+            this.state.webDailyError = error.data?.message || error.message || "No se pudo cargar el resumen diario web.";
+        } finally {
+            this.state.webDailyLoading = false;
         }
     }
 
@@ -262,7 +296,7 @@ export class ExecutiveDashboard extends Component {
             stock: { name: "Productos almacenables", res_model: "product.product", views: [[false, "list"], [false, "form"]] },
             low_stock: { name: "Productos con stock bajo", res_model: "product.product", views: [[false, "list"], [false, "form"]] },
             pos_sales: { name: "Ventas de Point of Sale", res_model: "pos.order", views: [[false, "list"], [false, "form"]] },
-            store_sales: { name: "Ventas de la tienda web", res_model: "sale.order", views: [[false, "list"], [false, "form"]] },
+            store_sales: { name: "Ventas Web", res_model: "sale.order", views: [[false, "list"], [false, "form"]] },
             other_sales: { name: "Otras ventas facturadas", res_model: "account.move", views: [[false, "list"], [false, "form"]] },
         };
         if (!ids.length) {

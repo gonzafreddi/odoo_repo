@@ -84,7 +84,7 @@
                     </div>
                     <button class="quick_stock_apply" t-on-click="applyAdjustment"
                             t-att-disabled="state.saving || state.countedQuantity === ''">
-                        <span t-if="state.saving" class="quick_stock_spinner"/> 
+                        <span t-if="state.saving" class="quick_stock_spinner"/>
                         <t t-if="state.saving">Aplicando…</t><t t-else="">Confirmar ajuste</t>
                     </button>
                 </t>
