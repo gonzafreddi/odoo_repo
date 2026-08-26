@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_customer_account_root" name="Cuenta Corriente"
+              parent="contacts.menu_contacts" sequence="10"
+              groups="shop_customer_auth.group_customer_account_user"/>
+    <menuitem id="menu_customer_accounts" name="Clientes"
+              parent="menu_customer_account_root" action="action_customer_accounts"
+              sequence="10"/>
+    <menuitem id="menu_customer_account_moves" name="Movimientos"
+              parent="menu_customer_account_root" action="action_customer_account_moves"
+              sequence="20"/>
+</odoo>

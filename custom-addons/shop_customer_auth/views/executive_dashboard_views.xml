@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_shop_executive_dashboard" model="ir.actions.client">
+        <field name="name">Tablero ejecutivo</field>
+        <field name="tag">shop_customer_auth.executive_dashboard</field>
+    </record>
+
+    <menuitem
+        id="menu_shop_executive_dashboard"
+        name="Tablero ejecutivo"
+        parent="sale.sale_menu_root"
+        action="action_shop_executive_dashboard"
+        groups="sales_team.group_sale_manager,purchase.group_purchase_manager,account.group_account_manager,base.group_system"
+        sequence="5"
+    />
+</odoo>

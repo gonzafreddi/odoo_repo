@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template
+        id="sale_order_portal_content_inherit_combo_wrap"
+        name="Wrap combo names in portal quotations"
+        inherit_id="sale.sale_order_portal_content"
+    >
+        <td name="td_combo_name" position="attributes">
+            <attribute name="class" add="text-break" separator=" "/>
+        </td>
+    </template>
+</odoo>

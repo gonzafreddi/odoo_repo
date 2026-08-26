@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_customer_account" model="ir.ui.view">
+        <field name="name">res.partner.form.customer.account</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_customer_account_moves" type="object"
+                        class="oe_stat_button" icon="fa-credit-card"
+                        groups="shop_customer_auth.group_customer_account_user">
+                    <field name="customer_account_move_count" widget="statinfo"
+                           string="Cuenta Corriente"/>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="before">
+                <group string="CUENTA CORRIENTE"
+                       groups="shop_customer_auth.group_customer_account_user">
+                    <group>
+                        <field name="customer_account_currency_id" invisible="1"/>
+                        <field name="current_account_balance" readonly="1"/>
+                        <field name="credit_limit" readonly="1" widget="monetary"
+                               options="{'currency_field': 'customer_account_currency_id'}"
+                               groups="shop_customer_auth.group_customer_account_user,!shop_customer_auth.group_customer_account_manager"/>
+                        <field name="credit_limit" widget="monetary"
+                               options="{'currency_field': 'customer_account_currency_id'}"
+                               groups="shop_customer_auth.group_customer_account_manager"/>
+                        <field name="available_credit" readonly="1"/>
+                        <field name="last_customer_account_move_date" readonly="1"/>
+                    </group>
+                    <group>
+                        <button name="action_register_customer_payment" type="object"
+                                string="Registrar Cobranza" class="btn-primary"
+                                groups="shop_customer_auth.group_customer_account_user"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_customer_account_partner_list" model="ir.ui.view">
+        <field name="name">res.partner.customer.account.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Cuentas Corrientes" default_order="name" create="0" delete="0">
+                <field name="name"/>
+                <field name="vat" optional="show"/>
+                <field name="phone" optional="show"/>
+                <field name="email" optional="show"/>
+                <field name="current_account_balance"/>
+                <field name="credit_limit" widget="monetary"
+                       options="{'currency_field': 'customer_account_currency_id'}"/>
+                <field name="available_credit"/>
+                <field name="last_customer_account_move_date"/>
+                <field name="customer_account_currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_customer_account_partner_search" model="ir.ui.view">
+        <field name="name">res.partner.customer.account.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search string="Cuentas Corrientes">
+                <field name="name" filter_domain="['|', '|', '|',
+                    ('name', 'ilike', self), ('vat', 'ilike', self),
+                    ('phone', 'ilike', self), ('email', 'ilike', self)]"/>
+                <field name="vat"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <filter name="debt" string="Con deuda"
+                        domain="[('current_account_balance', '&gt;', 0)]"/>
+                <filter name="credit" string="Saldo a favor"
+                        domain="[('current_account_balance', '&lt;', 0)]"/>
+                <filter name="zero" string="Sin saldo"
+                        domain="[('current_account_balance', '=', 0)]"/>
+                <filter name="over_limit" string="Sobre límite"
+                        domain="[('customer_account_over_limit', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_customer_accounts" model="ir.actions.act_window">
+        <field name="name">Cuentas Corrientes</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_customer_account_partner_list"/>
+        <field name="search_view_id" ref="view_customer_account_partner_search"/>
+        <field name="domain">[('customer_rank', '&gt;', 0)]</field>
+    </record>
+</odoo>

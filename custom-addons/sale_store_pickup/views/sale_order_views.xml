@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_inherit_store_pickup" model="ir.ui.view">
+        <field name="name">sale.order.form.store.pickup</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale_stock.view_order_form_inherit_sale_stock"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/div[@name='button_box']" position="after">
+                <widget
+                    name="web_ribbon"
+                    title="Retiro en local"
+                    bg_color="text-bg-success"
+                    invisible="not x_is_store_pickup"
+                />
+            </xpath>
+            <xpath expr="//group[@name='sale_shipping']/label[@for='commitment_date']" position="before">
+                <field name="x_is_store_pickup" widget="boolean_toggle"/>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_print_shipping_remito" string="Imprimir remito" type="object" class="btn-secondary" invisible="x_is_store_pickup"/>
+            </xpath>
+            <xpath expr="//page[@name='order_lines']" position="after">
+                <page
+                    string="Datos de envío"
+                    name="simple_shipping_data"
+                    invisible="x_is_store_pickup"
+                >
+                    <field
+                        name="x_logistics_status"
+                        widget="statusbar"
+                        statusbar_visible="pending,preparing,shipped,delivered,canceled"
+                        options="{'clickable': 1}"
+                    />
+                    <group>
+                        <group>
+                            <field name="x_shipping_phone" widget="phone"/>
+                            <field name="x_shipping_street"/>
+                            <field name="x_shipping_street_number"/>
+                            <field name="x_shipping_floor_apartment"/>
+                        </group>
+                        <group>
+                            <field name="x_shipping_city"/>
+                            <field name="x_shipping_state_id"/>
+                            <field name="x_shipping_zip"/>
+                            <field name="x_shipping_real_cost"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field
+                            name="x_shipping_notes"
+                            placeholder="Entre calles, horarios u otras indicaciones..."
+                        />
+                    </group>
+                </page>
+                <page
+                    string="Retiro en local"
+                    name="store_pickup_logistics"
+                    invisible="not x_is_store_pickup"
+                >
+                    <field
+                        name="x_logistics_status"
+                        widget="statusbar"
+                        statusbar_visible="pending,preparing,ready_pickup,delivered,canceled"
+                        options="{'clickable': 1}"
+                    />
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="sale_order_tree_inherit_store_pickup" model="ir.ui.view">
+        <field name="name">sale.order.list.store.pickup</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.sale_order_tree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field
+                    name="x_is_store_pickup"
+                    string="Retiro en local"
+                    optional="hide"
+                />
+                <field
+                    name="x_logistics_status"
+                    string="Estado logístico"
+                    optional="show"
+                    widget="badge"
+                    decoration-info="x_logistics_status == 'pending'"
+                    decoration-warning="x_logistics_status == 'preparing'"
+                    decoration-primary="x_logistics_status in ('shipped', 'ready_pickup')"
+                    decoration-success="x_logistics_status == 'delivered'"
+                    decoration-danger="x_logistics_status == 'canceled'"
+                />
+            </field>
+        </field>
+    </record>
+
+    <record id="view_sales_order_filter_inherit_store_pickup" model="ir.ui.view">
+        <field name="name">sale.order.search.store.pickup</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+        <field name="arch" type="xml">
+            <filter name="my_sale_orders_filter" position="after">
+                <separator/>
+                <filter
+                    name="store_pickups"
+                    string="Retiros en local"
+                    domain="[('x_is_store_pickup', '=', True)]"
+                />
+                <filter
+                    name="home_deliveries"
+                    string="Envíos a domicilio"
+                    domain="[('x_is_store_pickup', '=', False)]"
+                />
+                <separator/>
+                <filter
+                    name="logistics_pending"
+                    string="Pendientes"
+                    domain="[('x_logistics_status', '=', 'pending')]"
+                />
+                <filter
+                    name="logistics_preparing"
+                    string="En preparación"
+                    domain="[('x_logistics_status', '=', 'preparing')]"
+                />
+                <filter
+                    name="logistics_shipped"
+                    string="Enviados"
+                    domain="[('x_logistics_status', '=', 'shipped')]"
+                />
+                <filter
+                    name="logistics_ready_pickup"
+                    string="Listos para retirar"
+                    domain="[('x_logistics_status', '=', 'ready_pickup')]"
+                />
+                <filter
+                    name="logistics_delivered"
+                    string="Entregados"
+                    domain="[('x_logistics_status', '=', 'delivered')]"
+                />
+                <filter
+                    name="logistics_canceled"
+                    string="Logística cancelada"
+                    domain="[('x_logistics_status', '=', 'canceled')]"
+                />
+            </filter>
+            <filter name="preferred_payment_method_line_groupby" position="after">
+                <filter
+                    name="group_by_store_pickup"
+                    string="Retiro en local"
+                    context="{'group_by': 'x_is_store_pickup'}"
+                />
+                <filter
+                    name="group_by_logistics_status"
+                    string="Estado logístico"
+                    context="{'group_by': 'x_logistics_status'}"
+                />
+                <filter
+                    name="group_by_shipping_state"
+                    string="Provincia de envío"
+                    context="{'group_by': 'x_shipping_state_id'}"
+                />
+                <filter
+                    name="group_by_shipping_city"
+                    string="Localidad de envío"
+                    context="{'group_by': 'x_shipping_city'}"
+                />
+            </filter>
+        </field>
+    </record>
+</odoo>

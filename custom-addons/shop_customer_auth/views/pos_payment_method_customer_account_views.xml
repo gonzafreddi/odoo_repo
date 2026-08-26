@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="pos_payment_method_form_customer_account" model="ir.ui.view">
+        <field name="name">pos.payment.method.form.customer.account</field>
+        <field name="model">pos.payment.method</field>
+        <field name="inherit_id" ref="point_of_sale.pos_payment_method_view_form"/>
+        <field name="arch" type="xml">
+            <field name="split_transactions" position="after">
+                <field name="is_customer_account"/>
+            </field>
+        </field>
+    </record>
+    <record id="pos_payment_method_list_customer_account" model="ir.ui.view">
+        <field name="name">pos.payment.method.list.customer.account</field>
+        <field name="model">pos.payment.method</field>
+        <field name="inherit_id" ref="point_of_sale.pos_payment_method_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="split_transactions" position="after">
+                <field name="is_customer_account" optional="show"/>
+            </field>
+        </field>
+    </record>
+</odoo>
