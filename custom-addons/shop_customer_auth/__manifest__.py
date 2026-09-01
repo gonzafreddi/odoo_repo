@@ -47,6 +47,7 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
         'views/customer_account_views.xml',
         'views/register_customer_payment_views.xml',
         'views/res_partner_customer_account_views.xml',
+        'views/web_customer_views.xml',
         'views/pos_payment_method_customer_account_views.xml',
         'views/customer_account_menu.xml',
         'views/executive_dashboard_views.xml',

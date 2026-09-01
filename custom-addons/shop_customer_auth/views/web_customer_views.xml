@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_web_customer_list" model="ir.ui.view">
+        <field name="name">res.partner.web.customer.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Clientes registrados en la web" default_order="create_date desc"
+                  create="0">
+                <field name="name"/>
+                <field name="email" optional="show"/>
+                <field name="phone" optional="show"/>
+                <field name="vat" optional="hide"/>
+                <field name="city" optional="hide"/>
+                <field name="country_id" optional="hide"/>
+                <field name="create_date" string="Alta" optional="show"/>
+                <field name="current_account_balance" optional="hide"
+                       groups="shop_customer_auth.group_customer_account_user"/>
+                <field name="customer_account_currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_web_customer_search" model="ir.ui.view">
+        <field name="name">res.partner.web.customer.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search string="Clientes web">
+                <field name="name" filter_domain="['|', '|',
+                    ('name', 'ilike', self), ('email', 'ilike', self),
+                    ('phone', 'ilike', self)]"/>
+                <field name="email"/>
+                <field name="country_id"/>
+                <filter name="registered_today" string="Alta hoy"
+                        domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="registered_this_month" string="Alta este mes"
+                        domain="[('create_date', '&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="group_country" string="País" context="{'group_by': 'country_id'}"/>
+                <filter name="group_create_date" string="Fecha de alta"
+                        context="{'group_by': 'create_date:month'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_web_customers" model="ir.actions.act_window">
+        <field name="name">Clientes Web</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_web_customer_list"/>
+        <field name="search_view_id" ref="view_web_customer_search"/>
+        <field name="domain">[('is_web_registered_customer', '=', True)]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Todavía no hay clientes registrados desde la tienda web.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_web_customers" name="Clientes Web"
+              parent="contacts.menu_contacts" action="action_web_customers"
+              sequence="15"
+              groups="shop_customer_auth.group_customer_account_user"/>
+</odoo>

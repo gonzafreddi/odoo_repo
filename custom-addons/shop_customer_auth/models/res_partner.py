@@ -34,6 +34,26 @@ class ResPartner(models.Model):
         "shop.customer.account.move", "partner_id", string="Movimientos de Cuenta Corriente",
         readonly=True,
     )
+    shop_customer_auth_ids = fields.One2many(
+        "shop.customer.auth", "partner_id", string="Credenciales de tienda",
+    )
+    is_web_registered_customer = fields.Boolean(
+        string="Registrado en la web", store=True,
+        compute="_compute_is_web_registered_customer",
+        help="El cliente creó su cuenta desde la tienda web.",
+    )
+
+    @api.depends(
+        "shop_customer_auth_ids",
+        "shop_customer_auth_ids.register_source",
+        "shop_customer_auth_ids.active",
+    )
+    def _compute_is_web_registered_customer(self):
+        for partner in self:
+            partner.is_web_registered_customer = any(
+                auth.register_source == "web"
+                for auth in partner.shop_customer_auth_ids
+            )
 
     @api.depends_context("company", "allowed_company_ids")
     def _compute_customer_account_currency(self):
