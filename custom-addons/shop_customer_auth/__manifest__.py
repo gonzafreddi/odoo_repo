@@ -14,6 +14,7 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
         'contacts',
         'sale_management',
         'purchase',
+        'purchase_stock',
         'stock',
         'account',
         'hr_expense',

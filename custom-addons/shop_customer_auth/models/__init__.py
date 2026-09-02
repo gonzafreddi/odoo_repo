@@ -3,6 +3,8 @@ from . import password_reset
 from . import executive_dashboard
 from . import product_template
 from . import product_category
+from . import purchase_order
+from . import stock_move
 from . import quick_stock_adjustment
 from . import customer_account_move
 from . import res_partner
