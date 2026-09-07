@@ -147,6 +147,46 @@
 .low_stock_grid button { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem; border: 1px solid #ead9bf; border-radius: .45rem; background: #fffaf0; color: var(--ink); text-align: left; }
 .low_stock_grid span, .low_stock_grid strong, .low_stock_grid small { display: block; }.low_stock_grid small { margin-top: .2rem; color: var(--muted); }.low_stock_grid b { color: #a25f00; font-size: 1.2rem; }
 
+.metric_toggle { display: flex; padding: .15rem; border: 1px solid var(--line); border-radius: .4rem; background: #e9efed; }
+.metric_toggle button { padding: .3rem .55rem; border: 0; border-radius: .3rem; background: transparent; color: var(--muted); font-size: .72rem; font-weight: 700; }
+.metric_toggle button.active { background: var(--card); color: var(--teal); box-shadow: 0 1px 3px rgba(23, 43, 53, .12); }
+.panel_link { display: block; width: 100%; margin-top: .9rem; padding-top: .8rem; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--teal); text-align: left; font-weight: 700; font-size: .8rem; }
+
+.products_view { margin-top: 1.25rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
+.products_toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.products_toolbar input[type="search"] { flex: 1 1 16rem; min-height: 2.35rem; padding: .4rem .7rem; border: 1px solid var(--line); border-radius: .4rem; background: var(--paper); color: var(--ink); }
+.products_totals { display: flex; flex-wrap: wrap; gap: 1rem; color: var(--muted); font-size: .78rem; }
+.products_totals strong { margin-left: .3rem; color: var(--ink); font-family: var(--font-data); }
+.products_table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.products_table th, .products_table td { padding: .8rem .6rem; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.products_table th.is-left, .products_table td.is-left { text-align: left; white-space: normal; }
+.products_table thead th { border-top: 0; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; }
+.products_table thead th button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; }
+.products_table thead th button.is-sorted { color: var(--teal); }
+.products_table tbody th button { padding: 0; border: 0; background: transparent; color: var(--teal); text-align: left; font-weight: 700; white-space: normal; }
+.products_table td.is-positive { color: #168367; font-weight: 700; }
+.products_table td.is-negative { color: #c34c43; font-weight: 700; }
+
+.product_detail_overlay { position: fixed; inset: 0; z-index: 1000; display: flex; justify-content: flex-end; background: rgba(23, 43, 53, .45); }
+.product_detail_panel { position: relative; width: #{"min(30rem, 100%)"}; height: 100%; overflow-y: auto; padding: 1.5rem; background: var(--paper); box-shadow: -12px 0 32px rgba(23, 43, 53, .18); }
+.product_detail_close { position: absolute; top: 1rem; right: 1rem; width: 2rem; height: 2rem; border: 1px solid var(--line); border-radius: 50%; background: var(--card); color: var(--muted); font-size: 1.1rem; line-height: 1; }
+.product_detail_name { margin: .3rem 3rem .2rem 0; font-family: var(--font-display); font-size: 1.6rem; font-weight: 500; }
+.product_detail_period { margin: 0 0 1.2rem; color: var(--muted); font-size: .8rem; }
+.product_detail_kpis { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-bottom: 1.3rem; }
+.product_detail_kpis article { padding: .85rem; border: 1px solid var(--line); border-radius: .55rem; background: var(--card); }
+.product_detail_kpis strong { display: block; margin: .3rem 0; font-family: var(--font-data); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums lining-nums; }
+.product_detail_kpis em { display: block; color: var(--muted); font-size: .68rem; font-style: normal; }
+.product_detail_kpis em.is-positive { color: #168367; }.product_detail_kpis em.is-negative { color: #c34c43; }
+.product_detail_channels, .product_detail_trend { margin-bottom: 1.3rem; }
+.product_detail_channels h3, .product_detail_trend h3 { margin: 0 0 .6rem; color: var(--muted); font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.product_detail_channels ul { margin: 0; padding: 0; list-style: none; }
+.product_detail_channels li { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem 0; border-top: 1px solid var(--line); }
+.product_detail_channels strong { font-family: var(--font-data); }
+.product_detail_channels small { color: var(--muted); }
+.product_detail_bars { display: flex; align-items: end; gap: 2px; min-height: 5rem; padding: .4rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--card); overflow-x: auto; }
+.product_detail_bar { flex: 1 0 4px; min-width: 4px; display: flex; align-items: end; height: 4.2rem; }
+.product_detail_bar i { display: block; width: 100%; min-height: 1px; border-radius: 1px 1px 0 0; background: var(--teal); }
+
 .profitability_kpis { display: grid; grid-template-columns: repeat(12, 1fr); gap: .8rem; margin-top: 1.5rem; }
 .profitability_kpi { grid-column: span 3; min-width: 0; min-height: 8rem; overflow: hidden; padding: 1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
 .profitability_kpi.is-featured { background: var(--ink); color: #fff; border-color: var(--ink); }
@@ -171,5 +211,5 @@
 .payment_panel td, .daily_sales_view td, .category_panel td, .profitability_panel td, .account_list strong, .bar_value, .low_stock_grid b { font-family: var(--font-data); font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
 
 @media (max-width: 1000px) { .dashboard_header { align-items: start; flex-direction: column; }.dashboard_filters { justify-content: start; }.kpi_card { grid-column: span 4; }.kpi_card.is-featured { grid-column: span 8; }.channel_strip { grid-template-columns: repeat(3, 1fr); }.channel_intro { grid-column: 1 / -1; }.low_stock_grid { grid-template-columns: repeat(2, 1fr); } .profitability_kpi { grid-column: span 6; }.profitability_formula { grid-template-columns: repeat(2, minmax(0, 1fr)); }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: span 2; } }
-@media (max-width: 700px) { .o_shop_executive_dashboard { padding: 1rem; }.dashboard_filters { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }.preset_group { grid-column: 1 / -1; }.preset_group button { flex: 1; }.dashboard_filters input { width: 100%; }.kpi_card, .kpi_card.is-featured { grid-column: span 12; min-height: 7.5rem; }.channel_strip { grid-template-columns: 1fr; }.channel_intro { grid-column: auto; }.analysis_grid { grid-template-columns: 1fr; }.low_stock_grid { grid-template-columns: 1fr; }.comparison_note { text-align: left; } .profitability_kpi { grid-column: span 12; }.profitability_formula { grid-template-columns: 1fr; }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: auto; } }
+@media (max-width: 700px) { .o_shop_executive_dashboard { padding: 1rem; }.dashboard_filters { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }.preset_group { grid-column: 1 / -1; }.preset_group button { flex: 1; }.dashboard_filters input { width: 100%; }.kpi_card, .kpi_card.is-featured { grid-column: span 12; min-height: 7.5rem; }.channel_strip { grid-template-columns: 1fr; }.channel_intro { grid-column: auto; }.analysis_grid { grid-template-columns: 1fr; }.low_stock_grid { grid-template-columns: 1fr; }.comparison_note { text-align: left; } .profitability_kpi { grid-column: span 12; }.profitability_formula { grid-template-columns: 1fr; }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: auto; } .product_detail_panel { width: 100%; }.product_detail_kpis { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .dashboard_spinner { animation: none; }.kpi_card { transition: none; } }

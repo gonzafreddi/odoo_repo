@@ -64,7 +64,8 @@ class ShopExecutiveDashboard(models.AbstractModel):
             lambda line: line.display_type == "product" and line.product_id
         )
         by_category = defaultdict(lambda: {"amount": 0.0, "units": 0.0})
-        by_product = defaultdict(lambda: {"amount": 0.0, "units": 0.0, "cost": 0.0})
+        by_product = defaultdict(lambda: {"amount": 0.0, "units": 0.0, "cost": 0.0, "category": ""})
+        by_product_channel = defaultdict(lambda: {"amount": 0.0, "units": 0.0})
         channels = {
             "pos": {"amount": 0.0, "units": 0.0, "document_ids": pos_orders.ids},
             "store": {"amount": 0.0, "units": 0.0, "document_ids": store_orders.ids},
@@ -88,6 +89,9 @@ class ShopExecutiveDashboard(models.AbstractModel):
             by_product[(line.product_id.id, line.product_id.display_name)]["cost"] += (
                 quantity * line.product_id.with_company(company).standard_price
             )
+            by_product[(line.product_id.id, line.product_id.display_name)]["category"] = category.display_name
+            by_product_channel[(line.product_id.id, "other")]["amount"] += amount
+            by_product_channel[(line.product_id.id, "other")]["units"] += quantity
         for order in store_orders:
             conversion_date = fields.Date.to_date(order.date_order)
             for line in order.order_line.filtered(
@@ -112,6 +116,9 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 by_product[(line.product_id.id, line.product_id.display_name)]["cost"] += (
                     quantity * line.product_id.with_company(company).standard_price
                 )
+                by_product[(line.product_id.id, line.product_id.display_name)]["category"] = category.display_name
+                by_product_channel[(line.product_id.id, "store")]["amount"] += amount
+                by_product_channel[(line.product_id.id, "store")]["units"] += quantity
         for order in pos_orders:
             conversion_date = fields.Date.to_date(order.date_order)
             for line in order.lines:
@@ -138,6 +145,9 @@ class ShopExecutiveDashboard(models.AbstractModel):
                     conversion_date,
                 )
                 by_product[(line.product_id.id, line.product_id.display_name)]["cost"] += cost
+                by_product[(line.product_id.id, line.product_id.display_name)]["category"] = category.display_name
+                by_product_channel[(line.product_id.id, "pos")]["amount"] += amount
+                by_product_channel[(line.product_id.id, "pos")]["units"] += quantity
         channels["other"]["document_ids"] = other_moves.ids
         total = sum(channel["amount"] for channel in channels.values())
         units = sum(channel["units"] for channel in channels.values())
@@ -151,7 +161,77 @@ class ShopExecutiveDashboard(models.AbstractModel):
             "channels": channels,
             "by_category": by_category,
             "by_product": by_product,
+            "by_product_channel": by_product_channel,
         }
+
+    @api.model
+    def _product_daily_series(self, start, end, product_id):
+        company = self.env.company
+        series = defaultdict(lambda: {"amount": 0.0, "units": 0.0})
+        datetime_from = datetime.combine(start, time.min)
+        datetime_to = datetime.combine(end, time.max)
+
+        pos_orders = self.env["pos.order"].sudo().search([
+            ("company_id", "=", company.id),
+            ("state", "in", ("paid", "done")),
+            ("date_order", ">=", datetime_from),
+            ("date_order", "<=", datetime_to),
+        ])
+        for line in pos_orders.lines.filtered(lambda item: item.product_id.id == product_id):
+            order = line.order_id
+            day = fields.Date.to_date(order.date_order)
+            amount = order.currency_id._convert(
+                line.price_subtotal, company.currency_id, company, day
+            )
+            quantity = line.product_uom_id._compute_quantity(line.qty, line.product_id.uom_id)
+            series[day]["amount"] += amount
+            series[day]["units"] += quantity
+
+        store_orders = self.env["sale.order"].sudo().search([
+            ("company_id", "=", company.id),
+            ("state", "=", "sale"),
+            ("date_order", ">=", datetime_from),
+            ("date_order", "<=", datetime_to),
+        ])
+        for line in store_orders.order_line.filtered(
+            lambda item: not item.display_type and item.product_id.id == product_id
+        ):
+            order = line.order_id
+            day = fields.Date.to_date(order.date_order)
+            amount = order.currency_id._convert(
+                line.price_subtotal, company.currency_id, company, day
+            )
+            quantity = line.product_uom_id._compute_quantity(
+                line.product_uom_qty, line.product_id.uom_id
+            )
+            series[day]["amount"] += amount
+            series[day]["units"] += quantity
+
+        pos_invoice_ids = pos_orders.account_move.ids
+        moves = self.env["account.move"].sudo().search([
+            ("company_id", "=", company.id),
+            ("state", "=", "posted"),
+            ("move_type", "in", ("out_invoice", "out_refund")),
+            ("invoice_date", ">=", start),
+            ("invoice_date", "<=", end),
+            ("id", "not in", pos_invoice_ids),
+        ])
+        moves = moves.filtered(lambda move: not move.invoice_line_ids.sale_line_ids)
+        for line in moves.invoice_line_ids.filtered(
+            lambda item: item.display_type == "product" and item.product_id.id == product_id
+        ):
+            day = fields.Date.to_date(line.move_id.invoice_date)
+            amount = -line.balance
+            quantity = line.product_uom_id._compute_quantity(
+                line.quantity, line.product_id.uom_id
+            ) * line.move_id.direction_sign
+            series[day]["amount"] += amount
+            series[day]["units"] += quantity
+
+        return [
+            {"date": fields.Date.to_string(day), **values}
+            for day, values in sorted(series.items())
+        ]
 
     @api.model
     def _payment_method_data(self, sales):
@@ -375,11 +455,26 @@ class ShopExecutiveDashboard(models.AbstractModel):
             for key, amount in expenses["by_account"].items()
         ]
         expense_accounts.sort(key=lambda item: item["amount"], reverse=True)
-        product_ranking = [
-            {"id": key[0], "name": key[1], **values}
-            for key, values in sales["by_product"].items()
-        ]
-        product_ranking.sort(key=lambda item: item["amount"], reverse=True)
+        product_ranking = []
+        for key, values in sales["by_product"].items():
+            margin = values["amount"] - values["cost"]
+            product_ranking.append({
+                "id": key[0],
+                "name": key[1],
+                "category": values.get("category") or "",
+                "amount": values["amount"],
+                "units": values["units"],
+                "cost": values["cost"],
+                "margin": margin,
+                "margin_percent": margin / values["amount"] * 100 if values["amount"] else 0.0,
+                "avg_price": values["amount"] / values["units"] if values["units"] else 0.0,
+            })
+        top_products_by_amount = sorted(
+            product_ranking, key=lambda item: item["amount"], reverse=True
+        )[:15]
+        top_products_by_units = sorted(
+            product_ranking, key=lambda item: item["units"], reverse=True
+        )[:15]
 
         gross_margin = sales["total"] - sales["cost"]
         previous_gross_margin = previous_sales["total"] - previous_sales["cost"]
@@ -478,7 +573,8 @@ class ShopExecutiveDashboard(models.AbstractModel):
             "payment_methods": payment_methods,
             "categories": categories,
             "expense_accounts": expense_accounts,
-            "product_ranking": product_ranking[:10],
+            "top_products_by_amount": top_products_by_amount,
+            "top_products_by_units": top_products_by_units,
             "profitability_products": profitability_products[:20],
             "low_stock": stock["low_stock"],
             "record_ids": {
@@ -617,6 +713,132 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 "page_size": page_size,
                 "page_count": page_count,
                 "total_rows": total_rows,
+            },
+            "currency": {
+                "name": company.currency_id.name,
+                "decimal_places": company.currency_id.decimal_places,
+            },
+        }
+
+
+    @api.model
+    def get_product_ranking(
+        self, date_from, date_to, page=1, page_size=20, sort="amount", order="desc", search=None
+    ):
+        self._check_dashboard_access()
+        company = self.env.company
+        start, end, _previous_start, _previous_end = self._parse_period(date_from, date_to)
+        page = max(int(page or 1), 1)
+        page_size = min(max(int(page_size or 20), 5), 100)
+        sort = sort if sort in ("amount", "units", "margin", "margin_percent", "avg_price", "name") else "amount"
+        reverse = order != "asc"
+
+        sales = self._sales_data(start, end)
+        rows = []
+        for (product_id, name), values in sales["by_product"].items():
+            margin = values["amount"] - values["cost"]
+            rows.append({
+                "id": product_id,
+                "name": name,
+                "category": values.get("category") or "",
+                "amount": values["amount"],
+                "units": values["units"],
+                "cost": values["cost"],
+                "margin": margin,
+                "margin_percent": margin / values["amount"] * 100 if values["amount"] else 0.0,
+                "avg_price": values["amount"] / values["units"] if values["units"] else 0.0,
+            })
+        if search:
+            needle = search.strip().lower()
+            rows = [row for row in rows if needle in row["name"].lower() or needle in row["category"].lower()]
+        rows.sort(key=lambda row: row[sort], reverse=reverse)
+
+        total_rows = len(rows)
+        page_count = max((total_rows + page_size - 1) // page_size, 1)
+        page = min(page, page_count)
+        offset = (page - 1) * page_size
+        return {
+            "rows": rows[offset:offset + page_size],
+            "totals": {
+                "amount": sum(row["amount"] for row in rows),
+                "units": sum(row["units"] for row in rows),
+                "margin": sum(row["margin"] for row in rows),
+            },
+            "sort": sort,
+            "order": "asc" if not reverse else "desc",
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "page_count": page_count,
+                "total_rows": total_rows,
+            },
+            "currency": {
+                "name": company.currency_id.name,
+                "decimal_places": company.currency_id.decimal_places,
+            },
+        }
+
+    @api.model
+    def get_product_detail(self, date_from, date_to, product_id):
+        self._check_dashboard_access()
+        company = self.env.company
+        start, end, previous_start, previous_end = self._parse_period(date_from, date_to)
+        product = self.env["product.product"].sudo().browse(product_id).exists()
+        if not product:
+            raise ValidationError(_("El producto solicitado ya no existe."))
+
+        sales = self._sales_data(start, end)
+        previous_sales = self._sales_data(previous_start, previous_end)
+
+        def find(values_by_product, pid):
+            return next((v for (i, _n), v in values_by_product.items() if i == pid), None)
+
+        current = find(sales["by_product"], product_id) or {
+            "amount": 0.0, "units": 0.0, "cost": 0.0, "category": product.categ_id.display_name,
+        }
+        previous = find(previous_sales["by_product"], product_id) or {"amount": 0.0, "units": 0.0, "cost": 0.0}
+        margin = current["amount"] - current["cost"]
+
+        channels = []
+        channel_labels = {"pos": _("POS"), "store": _("Web"), "other": _("Otras ventas facturadas")}
+        for key in ("pos", "store", "other"):
+            values = sales["by_product_channel"].get((product_id, key), {"amount": 0.0, "units": 0.0})
+            if company.currency_id.is_zero(values["amount"]) and not values["units"]:
+                continue
+            channels.append({
+                "key": key,
+                "label": channel_labels[key],
+                "amount": values["amount"],
+                "units": values["units"],
+            })
+        channels.sort(key=lambda item: abs(item["amount"]), reverse=True)
+
+        return {
+            "product": {
+                "id": product.id,
+                "name": product.display_name,
+                "category": product.with_company(company).categ_id.display_name,
+                "stock_available": product.with_company(company).qty_available,
+                "standard_price": product.with_company(company).standard_price,
+                "list_price": product.with_company(company).lst_price,
+            },
+            "metrics": {
+                "amount": current["amount"],
+                "units": current["units"],
+                "cost": current["cost"],
+                "margin": margin,
+                "margin_percent": margin / current["amount"] * 100 if current["amount"] else 0.0,
+                "avg_price": current["amount"] / current["units"] if current["units"] else 0.0,
+            },
+            "comparisons": {
+                "amount": self._comparison(current["amount"], previous["amount"]),
+                "units": self._comparison(current["units"], previous["units"]),
+            },
+            "channels": channels,
+            "daily_series": self._product_daily_series(start, end, product_id),
+            "period": {
+                "date_from": fields.Date.to_string(start),
+                "date_to": fields.Date.to_string(end),
             },
             "currency": {
                 "name": company.currency_id.name,

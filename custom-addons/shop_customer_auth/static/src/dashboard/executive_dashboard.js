@@ -34,6 +34,14 @@ export class ExecutiveDashboard extends Component {
             evolutionLoading: false,
             evolutionError: null,
             evolutionData: null,
+            overviewProductMetric: "amount",
+            productsLoading: false,
+            productsError: null,
+            productsData: null,
+            productsSort: "amount",
+            productsOrder: "desc",
+            productsSearch: "",
+            productDetail: { open: false, loading: false, error: null, data: null },
         });
         onWillStart(() => this.load());
     }
@@ -95,6 +103,9 @@ export class ExecutiveDashboard extends Component {
         if (this.state.view === "evolution") {
             return this.loadEvolution(1);
         }
+        if (this.state.view === "products") {
+            return this.loadProducts(1);
+        }
         return this.load();
     }
 
@@ -106,7 +117,97 @@ export class ExecutiveDashboard extends Component {
             await this.loadWebDaily(1);
         } else if (view === "evolution") {
             await this.loadEvolution(1);
+        } else if (view === "products") {
+            await this.loadProducts(1);
         }
+    }
+
+    async loadProducts(page = 1) {
+        if (!this.state.dateFrom || !this.state.dateTo || this.state.dateFrom > this.state.dateTo) {
+            this.state.productsError = "La fecha desde debe ser anterior o igual a la fecha hasta.";
+            return;
+        }
+        this.state.productsLoading = true;
+        this.state.productsError = null;
+        try {
+            this.state.productsData = await this.orm.call(
+                "shop.executive.dashboard",
+                "get_product_ranking",
+                [],
+                {
+                    date_from: this.state.dateFrom,
+                    date_to: this.state.dateTo,
+                    page,
+                    page_size: 20,
+                    sort: this.state.productsSort,
+                    order: this.state.productsOrder,
+                    search: this.state.productsSearch || null,
+                }
+            );
+        } catch (error) {
+            this.state.productsError = error.data?.message || error.message || "No se pudo cargar el ranking de productos.";
+        } finally {
+            this.state.productsLoading = false;
+        }
+    }
+
+    sortProducts(field) {
+        if (this.state.productsSort === field) {
+            this.state.productsOrder = this.state.productsOrder === "desc" ? "asc" : "desc";
+        } else {
+            this.state.productsSort = field;
+            this.state.productsOrder = "desc";
+        }
+        return this.loadProducts(1);
+    }
+
+    onProductsSearch(event) {
+        this.state.productsSearch = event.target.value;
+        clearTimeout(this._productsSearchTimer);
+        this._productsSearchTimer = setTimeout(() => this.loadProducts(1), 300);
+    }
+
+    async openProductDetail(productId) {
+        this.state.productDetail.open = true;
+        this.state.productDetail.loading = true;
+        this.state.productDetail.error = null;
+        this.state.productDetail.data = null;
+        try {
+            this.state.productDetail.data = await this.orm.call(
+                "shop.executive.dashboard",
+                "get_product_detail",
+                [],
+                {
+                    date_from: this.state.dateFrom,
+                    date_to: this.state.dateTo,
+                    product_id: productId,
+                }
+            );
+        } catch (error) {
+            this.state.productDetail.error = error.data?.message || error.message || "No se pudo cargar el detalle del producto.";
+        } finally {
+            this.state.productDetail.loading = false;
+        }
+    }
+
+    closeProductDetail() {
+        this.state.productDetail.open = false;
+    }
+
+    productDetailBarHeight(value) {
+        const rows = this.state.productDetail.data?.daily_series || [];
+        const maximum = Math.max(...rows.map((row) => Math.abs(row.units || 0)), 1);
+        return `${Math.max(Math.abs(value || 0) / maximum * 100, value ? 3 : 0)}%`;
+    }
+
+    handleKpiClick(kpi) {
+        if (!kpi.action) {
+            return;
+        }
+        if (kpi.action === "products_view") {
+            return this.setView("products");
+        }
+        return this.openRecords(kpi.action);
     }
 
     async loadDaily(page = 1) {
@@ -260,9 +361,18 @@ export class ExecutiveDashboard extends Component {
             { key: "result", label: "Resultado operativo estimado", value: this.formatMoney(metrics.operating_result), comparison: comparisons.operating_result },
             { key: "ticket", label: "Ticket promedio", value: this.formatMoney(metrics.average_ticket), comparison: comparisons.average_ticket },
             { key: "documents", label: "Operaciones de venta", value: this.formatNumber(metrics.document_count), comparison: comparisons.document_count },
-            { key: "units", label: "Unidades vendidas", value: this.formatNumber(metrics.units_sold), comparison: comparisons.units_sold },
+            { key: "units", label: "Unidades vendidas", value: this.formatNumber(metrics.units_sold), comparison: comparisons.units_sold, action: "products_view" },
             { key: "alerts", label: "Productos con stock ≤ 5", value: this.formatNumber(metrics.low_stock_count), action: "low_stock", alert: metrics.low_stock_count > 0 },
         ];
+    }
+
+    get overviewTopProducts() {
+        const key = this.state.overviewProductMetric === "units" ? "top_products_by_units" : "top_products_by_amount";
+        return this.state.data?.[key] || [];
+    }
+
+    setOverviewProductMetric(metric) {
+        this.state.overviewProductMetric = metric;
     }
 
     get profitabilityKpis() {

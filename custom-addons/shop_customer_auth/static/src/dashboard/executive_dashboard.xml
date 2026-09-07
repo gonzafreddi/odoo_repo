@@ -25,6 +25,7 @@
                 <button t-att-class="state.view === 'daily' ? 'active' : ''" t-on-click="() => this.setView('daily')">Resumen diario</button>
                 <button t-att-class="state.view === 'webDaily' ? 'active' : ''" t-on-click="() => this.setView('webDaily')">Resumen diario web</button>
                 <button t-att-class="state.view === 'evolution' ? 'active' : ''" t-on-click="() => this.setView('evolution')">Evolución</button>
+                <button t-att-class="state.view === 'products' ? 'active' : ''" t-on-click="() => this.setView('products')">Productos</button>
                 <button t-att-class="state.view === 'profitability' ? 'active' : ''" t-on-click="() => this.setView('profitability')">Rentabilidad</button>
             </nav>
 
@@ -39,7 +40,7 @@
                 <section class="kpi_grid" aria-label="Indicadores principales">
                     <button t-foreach="kpis" t-as="kpi" t-key="kpi.key"
                             t-att-class="'kpi_card ' + (kpi.alert ? 'is-alert ' : '') + (kpi.key === 'result' ? 'is-featured' : '')"
-                            t-on-click="() => kpi.action &amp;&amp; this.openRecords(kpi.action)"
+                            t-on-click="() => this.handleKpiClick(kpi)"
                             t-att-disabled="!kpi.action">
                         <span class="kpi_label" t-esc="kpi.label"/>
                         <strong class="kpi_value" t-esc="kpi.value"/>
@@ -112,14 +113,24 @@
 
                 <div class="analysis_grid">
                     <section class="dashboard_panel">
-                        <div class="panel_heading"><div><span class="section_code">TOP 10</span><h2>Productos por ventas</h2></div></div>
+                        <div class="panel_heading">
+                            <div><span class="section_code">TOP 15</span><h2>Productos más vendidos</h2></div>
+                            <div class="metric_toggle" role="group" aria-label="Métrica de ranking">
+                                <button t-att-class="state.overviewProductMetric === 'amount' ? 'active' : ''" t-on-click="() => this.setOverviewProductMetric('amount')">En plata</button>
+                                <button t-att-class="state.overviewProductMetric === 'units' ? 'active' : ''" t-on-click="() => this.setOverviewProductMetric('units')">En unidades</button>
+                            </div>
+                        </div>
                         <ol class="rank_list">
-                            <li t-foreach="state.data.product_ranking" t-as="row" t-key="row.id">
-                                <button t-on-click="() => this.openProduct(row.id)"><span class="rank_name" t-esc="row.name"/><span t-esc="formatMoney(row.amount)"/></button>
-                                <span class="bar_track"><i t-att-style="'width:' + barWidth(row.amount, state.data.product_ranking, 'amount')"/></span>
+                            <li t-foreach="overviewTopProducts" t-as="row" t-key="row.id">
+                                <button t-on-click="() => this.openProductDetail(row.id)">
+                                    <span class="rank_name" t-esc="row.name"/>
+                                    <span t-esc="state.overviewProductMetric === 'units' ? formatNumber(row.units) + ' u.' : formatMoney(row.amount)"/>
+                                </button>
+                                <span class="bar_track"><i t-att-style="'width:' + barWidth(row[state.overviewProductMetric], overviewTopProducts, state.overviewProductMetric)"/></span>
                             </li>
-                            <li t-if="!state.data.product_ranking.length" class="list_empty">Sin ventas de productos.</li>
+                            <li t-if="!overviewTopProducts.length" class="list_empty">Sin ventas de productos.</li>
                         </ol>
+                        <button class="panel_link" t-on-click="() => this.setView('products')">Ver catálogo completo con búsqueda y filtros →</button>
                     </section>
                     <section class="dashboard_panel">
                         <div class="panel_heading"><div><span class="section_code">GASTOS</span><h2>Gastos registrados por cuenta</h2></div></div>
@@ -176,7 +187,7 @@
                                 <thead><tr><th>Producto</th><th>Ventas</th><th>Costo vendido</th><th>Margen bruto</th><th>Margen %</th><th>Unidades</th></tr></thead>
                                 <tbody>
                                     <tr t-foreach="state.data.profitability_products" t-as="row" t-key="row.id">
-                                        <th><button t-on-click="() => this.openProduct(row.id)" t-esc="row.name"/></th>
+                                        <th><button t-on-click="() => this.openProductDetail(row.id)" t-esc="row.name"/></th>
                                         <td t-esc="formatMoney(row.sales)"/><td t-esc="formatMoney(row.cost)"/>
                                         <td t-att-class="comparisonClass(row.margin)" t-esc="formatMoney(row.margin)"/>
                                         <td t-att-class="comparisonClass(row.margin_percent)" t-esc="formatPercentage(row.margin_percent)"/>
@@ -270,6 +281,128 @@
                     </footer>
                 </section>
             </t>
+
+            <t t-if="state.view === 'products'">
+                <div t-if="state.productsLoading" class="dashboard_status" role="status" aria-live="polite">
+                    <span class="dashboard_spinner" aria-hidden="true"/> Preparando catálogo de productos…
+                </div>
+                <div t-elif="state.productsError" class="dashboard_error" role="alert">
+                    <strong>No se pudo cargar el catálogo.</strong><span t-esc="state.productsError"/>
+                    <button t-on-click="() => this.loadProducts(1)">Reintentar</button>
+                </div>
+                <section t-elif="state.productsData" class="products_view" aria-labelledby="products-title">
+                    <div class="daily_sales_heading">
+                        <div><span class="section_code">CATÁLOGO</span><h2 id="products-title">Desempeño por producto</h2></div>
+                        <span><t t-esc="state.productsData.pagination.total_rows"/> productos con actividad</span>
+                    </div>
+                    <div class="products_toolbar">
+                        <input type="search" placeholder="Buscar por producto o categoría…" t-att-value="state.productsSearch" t-on-input="onProductsSearch"/>
+                        <div class="products_totals">
+                            <span>Total unidades <strong t-esc="formatNumber(state.productsData.totals.units)"/></span>
+                            <span>Total ventas <strong t-esc="formatMoney(state.productsData.totals.amount)"/></span>
+                            <span>Total margen <strong t-esc="formatMoney(state.productsData.totals.margin)"/></span>
+                        </div>
+                    </div>
+                    <div class="table_scroll">
+                        <table class="products_table">
+                            <thead><tr>
+                                <th class="is-left">Producto</th>
+                                <th class="is-left">Categoría</th>
+                                <th><button t-att-class="state.productsSort === 'units' ? 'is-sorted' : ''" t-on-click="() => this.sortProducts('units')">Unidades<t t-if="state.productsSort === 'units'" t-esc="state.productsOrder === 'desc' ? ' ↓' : ' ↑'"/></button></th>
+                                <th><button t-att-class="state.productsSort === 'amount' ? 'is-sorted' : ''" t-on-click="() => this.sortProducts('amount')">Ventas<t t-if="state.productsSort === 'amount'" t-esc="state.productsOrder === 'desc' ? ' ↓' : ' ↑'"/></button></th>
+                                <th><button t-att-class="state.productsSort === 'avg_price' ? 'is-sorted' : ''" t-on-click="() => this.sortProducts('avg_price')">Precio prom.<t t-if="state.productsSort === 'avg_price'" t-esc="state.productsOrder === 'desc' ? ' ↓' : ' ↑'"/></button></th>
+                                <th><button t-att-class="state.productsSort === 'margin' ? 'is-sorted' : ''" t-on-click="() => this.sortProducts('margin')">Margen<t t-if="state.productsSort === 'margin'" t-esc="state.productsOrder === 'desc' ? ' ↓' : ' ↑'"/></button></th>
+                                <th><button t-att-class="state.productsSort === 'margin_percent' ? 'is-sorted' : ''" t-on-click="() => this.sortProducts('margin_percent')">Margen %<t t-if="state.productsSort === 'margin_percent'" t-esc="state.productsOrder === 'desc' ? ' ↓' : ' ↑'"/></button></th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="state.productsData.rows" t-as="row" t-key="row.id">
+                                    <th class="is-left"><button t-on-click="() => this.openProductDetail(row.id)" t-esc="row.name"/></th>
+                                    <td class="is-left" t-esc="row.category"/>
+                                    <td t-esc="formatNumber(row.units)"/>
+                                    <td t-esc="formatMoney(row.amount)"/>
+                                    <td t-esc="formatMoney(row.avg_price)"/>
+                                    <td t-att-class="comparisonClass(row.margin)" t-esc="formatMoney(row.margin)"/>
+                                    <td t-att-class="comparisonClass(row.margin_percent)" t-esc="formatPercentage(row.margin_percent)"/>
+                                </tr>
+                                <tr t-if="!state.productsData.rows.length"><td colspan="7">No hay productos vendidos en el período o la búsqueda no encontró resultados.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <footer class="daily_pager" t-if="state.productsData.pagination.total_rows">
+                        <span>Página <strong t-esc="state.productsData.pagination.page"/> de <strong t-esc="state.productsData.pagination.page_count"/></span>
+                        <div>
+                            <button t-on-click="() => this.loadProducts(state.productsData.pagination.page - 1)" t-att-disabled="state.productsLoading || state.productsData.pagination.page &lt;= 1">Anterior</button>
+                            <button t-on-click="() => this.loadProducts(state.productsData.pagination.page + 1)" t-att-disabled="state.productsLoading || state.productsData.pagination.page &gt;= state.productsData.pagination.page_count">Siguiente</button>
+                        </div>
+                    </footer>
+                </section>
+            </t>
+
+            <div t-if="state.productDetail.open" class="product_detail_overlay" t-on-click="closeProductDetail">
+                <aside class="product_detail_panel" role="dialog" aria-modal="true" aria-labelledby="product-detail-title" t-on-click.stop="() => {}">
+                    <button class="product_detail_close" t-on-click="closeProductDetail" aria-label="Cerrar">×</button>
+                    <div t-if="state.productDetail.loading" class="dashboard_status" role="status" aria-live="polite">
+                        <span class="dashboard_spinner" aria-hidden="true"/> Analizando producto…
+                    </div>
+                    <div t-elif="state.productDetail.error" class="dashboard_error" role="alert">
+                        <strong>No se pudo cargar el detalle.</strong><span t-esc="state.productDetail.error"/>
+                    </div>
+                    <t t-elif="state.productDetail.data">
+                        <p class="section_code" id="product-detail-title"><t t-esc="state.productDetail.data.product.category"/></p>
+                        <h2 class="product_detail_name" t-esc="state.productDetail.data.product.name"/>
+                        <p class="product_detail_period">Período <t t-esc="formatDate(state.productDetail.data.period.date_from)"/> al <t t-esc="formatDate(state.productDetail.data.period.date_to)"/></p>
+
+                        <section class="product_detail_kpis">
+                            <article>
+                                <span class="kpi_label">Unidades vendidas</span>
+                                <strong t-esc="formatNumber(state.productDetail.data.metrics.units)"/>
+                                <em t-att-class="comparisonClass(state.productDetail.data.comparisons.units)"><t t-esc="comparison(state.productDetail.data.comparisons.units)"/> vs. período anterior</em>
+                            </article>
+                            <article>
+                                <span class="kpi_label">Ventas</span>
+                                <strong t-esc="formatMoney(state.productDetail.data.metrics.amount)"/>
+                                <em t-att-class="comparisonClass(state.productDetail.data.comparisons.amount)"><t t-esc="comparison(state.productDetail.data.comparisons.amount)"/> vs. período anterior</em>
+                            </article>
+                            <article>
+                                <span class="kpi_label">Precio promedio</span>
+                                <strong t-esc="formatMoney(state.productDetail.data.metrics.avg_price)"/>
+                            </article>
+                            <article>
+                                <span class="kpi_label">Margen bruto</span>
+                                <strong t-att-class="comparisonClass(state.productDetail.data.metrics.margin)" t-esc="formatMoney(state.productDetail.data.metrics.margin)"/>
+                                <em class="is-neutral"><t t-esc="formatPercentage(state.productDetail.data.metrics.margin_percent)"/> de margen</em>
+                            </article>
+                            <article>
+                                <span class="kpi_label">Stock disponible ahora</span>
+                                <strong t-esc="formatNumber(state.productDetail.data.product.stock_available)"/>
+                            </article>
+                        </section>
+
+                        <section class="product_detail_channels" t-if="state.productDetail.data.channels.length">
+                            <h3>De dónde vienen sus ventas</h3>
+                            <ul>
+                                <li t-foreach="state.productDetail.data.channels" t-as="channel" t-key="channel.key">
+                                    <span t-esc="channel.label"/>
+                                    <strong t-esc="formatMoney(channel.amount)"/>
+                                    <small><t t-esc="formatNumber(channel.units)"/> u.</small>
+                                </li>
+                            </ul>
+                        </section>
+
+                        <section class="product_detail_trend">
+                            <h3>Evolución diaria en el período</h3>
+                            <div t-if="state.productDetail.data.daily_series.length" class="product_detail_bars">
+                                <div class="product_detail_bar" t-foreach="state.productDetail.data.daily_series" t-as="day" t-key="day.date" t-att-title="formatDate(day.date) + ': ' + formatNumber(day.units) + ' u. · ' + formatMoney(day.amount)">
+                                    <i t-att-style="'height:' + productDetailBarHeight(day.units)"/>
+                                </div>
+                            </div>
+                            <p t-else="" class="list_empty">Sin ventas registradas día a día en este período.</p>
+                        </section>
+
+                        <button class="panel_link" t-on-click="() => this.openProduct(state.productDetail.data.product.id)">Abrir ficha completa del producto en Odoo →</button>
+                    </t>
+                </aside>
+            </div>
 
             <t t-if="state.view === 'evolution'">
                 <div t-if="state.evolutionLoading" class="dashboard_status" role="status" aria-live="polite">
