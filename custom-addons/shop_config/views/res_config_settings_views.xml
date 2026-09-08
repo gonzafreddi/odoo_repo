@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.shop.config</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='sale_shipping_setting_container']/setting[@id='delivery']" position="after">
+                <setting id="suplex_free_shipping" string="Envío gratis (tienda online)"
+                         help="Umbral de envío gratis que usa la tienda online (banner y carrito).">
+                    <field name="x_free_shipping_enabled"/>
+                    <div class="content-group mt16" invisible="not x_free_shipping_enabled">
+                        <div class="row">
+                            <label for="x_free_shipping_threshold" class="col-lg-4 o_light_label"/>
+                            <field name="x_free_shipping_threshold"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="x_default_shipping_cost" class="col-lg-4 o_light_label"/>
+                            <field name="x_default_shipping_cost"/>
+                        </div>
+                    </div>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="param_free_shipping_threshold" model="ir.config_parameter">
+            <field name="key">shop_config.free_shipping_threshold</field>
+            <field name="value">130000</field>
+        </record>
+        <record id="param_default_shipping_cost" model="ir.config_parameter">
+            <field name="key">shop_config.default_shipping_cost</field>
+            <field name="value">3500</field>
+        </record>
+        <record id="param_free_shipping_enabled" model="ir.config_parameter">
+            <field name="key">shop_config.free_shipping_enabled</field>
+            <field name="value">1</field>
+        </record>
+    </data>
+</odoo>
