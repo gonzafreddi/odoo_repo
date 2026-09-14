@@ -20,10 +20,7 @@ class ShopProductObjectiveLine(models.Model):
     featured = fields.Boolean(default=False)
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        (
-            "shop_product_objective_line_unique",
-            "unique(objective_id, product_tmpl_id)",
-            "Un producto solo puede aparecer una vez por objetivo.",
-        ),
-    ]
+    _product_unique_per_objective = models.Constraint(
+        "unique(objective_id, product_tmpl_id)",
+        "Un producto solo puede aparecer una vez por objetivo.",
+    )

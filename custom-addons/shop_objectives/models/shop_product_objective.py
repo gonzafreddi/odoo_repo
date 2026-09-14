@@ -19,10 +19,7 @@ class ShopProductObjective(models.Model):
         "objective_id",
     )
 
-    _sql_constraints = [
-        (
-            "shop_product_objective_slug_unique",
-            "unique(slug)",
-            "El slug del objetivo debe ser único.",
-        ),
-    ]
+    _slug_unique = models.Constraint(
+        "unique(slug)",
+        "El slug del objetivo debe ser único.",
+    )
