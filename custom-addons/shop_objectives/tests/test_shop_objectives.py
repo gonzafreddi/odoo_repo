@@ -111,3 +111,83 @@ class TestShopObjectives(TransactionCase):
             active_lines = objective.line_ids.filtered("active")
             self.assertGreaterEqual(len(active_lines), 3)
             self.assertLessEqual(len(active_lines.filtered("featured")), 3)
+
+    def test_list_active_returns_ordered_seeded_objectives_without_archived_ones(self):
+        archived_objective = self._create_objective(
+            name="Objetivo archivado RPC",
+            slug="objetivo-archivado-rpc",
+            sequence=5,
+            active=False,
+        )
+
+        objectives = self.Objective.list_active()
+
+        self.assertEqual(
+            [(objective["slug"], objective["sequence"]) for objective in objectives],
+            [
+                ("ganar-masa", 10),
+                ("definir", 20),
+                ("energia", 30),
+                ("recuperacion", 40),
+            ],
+        )
+        self.assertNotIn(archived_objective.id, [objective["id"] for objective in objectives])
+
+    def test_get_by_slug_returns_active_lines_and_featured_state(self):
+        objective = self.Objective.get_by_slug("ganar-masa")
+
+        self.assertEqual(objective["slug"], "ganar-masa")
+        self.assertTrue(objective["lines"])
+        self.assertTrue(any(line["featured"] for line in objective["lines"]))
+        self.assertEqual(
+            [line["sequence"] for line in objective["lines"]],
+            sorted(line["sequence"] for line in objective["lines"]),
+        )
+
+    def test_get_by_slug_returns_false_for_an_unknown_slug(self):
+        self.assertFalse(self.Objective.get_by_slug("no-existe-este-slug"))
+
+    def test_get_by_slug_returns_false_for_an_archived_objective(self):
+        objective = self._create_objective(
+            name="Objetivo archivado RPC",
+            slug="objetivo-archivado-rpc",
+            active=False,
+        )
+
+        self.assertFalse(self.Objective.get_by_slug(objective.slug))
+
+    def test_get_by_slug_returns_empty_lines_for_an_active_objective_without_lines(self):
+        objective = self._create_objective(
+            name="Objetivo vacío RPC",
+            slug="objetivo-vacio-rpc",
+        )
+
+        result = self.Objective.get_by_slug(objective.slug)
+
+        self.assertEqual(result["id"], objective.id)
+        self.assertEqual(result["lines"], [])
+
+    def test_rpc_methods_require_objective_read_access(self):
+        internal_user = new_test_user(
+            self.env,
+            login="shop_objectives_rpc_internal_user",
+            groups="base.group_user",
+        )
+        portal_user = new_test_user(
+            self.env,
+            login="shop_objectives_rpc_portal_user",
+            groups="base.group_portal",
+        )
+
+        self.assertEqual(
+            len(self.Objective.with_user(internal_user).list_active()),
+            4,
+        )
+        self.assertEqual(
+            self.Objective.with_user(internal_user).get_by_slug("ganar-masa")["slug"],
+            "ganar-masa",
+        )
+        with self.assertRaises(AccessError):
+            self.Objective.with_user(portal_user).list_active()
+        with self.assertRaises(AccessError):
+            self.Objective.with_user(portal_user).get_by_slug("ganar-masa")

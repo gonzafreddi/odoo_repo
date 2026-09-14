@@ -24,6 +24,43 @@ class ShopProductObjective(models.Model):
         for objective in self:
             objective.line_count = len(objective.line_ids)
 
+    def list_active(self):
+        """RPC: objetivos activos, ordenados. Llamar con ids=[] vía execute_kw."""
+        objectives = self.search([], order="sequence")
+        return [
+            {
+                "id": objective.id,
+                "name": objective.name,
+                "slug": objective.slug,
+                "short_description": objective.short_description or "",
+                "sequence": objective.sequence,
+            }
+            for objective in objectives
+        ]
+
+    def get_by_slug(self, slug):
+        """RPC: detalle y líneas activas de un objetivo por slug."""
+        objective = self.search([("slug", "=", slug)], limit=1)
+        if not objective:
+            return False
+        lines = objective.line_ids.filtered("active").sorted("sequence")
+        return {
+            "id": objective.id,
+            "name": objective.name,
+            "slug": objective.slug,
+            "short_description": objective.short_description or "",
+            "description": objective.description or "",
+            "sequence": objective.sequence,
+            "lines": [
+                {
+                    "product_tmpl_id": line.product_tmpl_id.id,
+                    "sequence": line.sequence,
+                    "featured": line.featured,
+                }
+                for line in lines
+            ],
+        }
+
     _slug_unique = models.Constraint(
         "unique(slug)",
         "El slug del objetivo debe ser único.",
