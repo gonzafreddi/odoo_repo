@@ -68,6 +68,7 @@ class TestShopObjectives(TransactionCase):
 
         with mute_logger("odoo.sql_db"), self.assertRaises(IntegrityError), self.env.cr.savepoint():
             self._create_objective(name="Otro objetivo")
+            self.env.flush_all()
 
     def test_product_cannot_be_repeated_in_an_objective(self):
         objective = self._create_objective()
@@ -81,6 +82,7 @@ class TestShopObjectives(TransactionCase):
                 "objective_id": objective.id,
                 "product_tmpl_id": self.product.id,
             })
+            self.env.flush_all()
 
     def test_internal_user_can_read_but_cannot_modify_objectives(self):
         objective = self._create_objective()
