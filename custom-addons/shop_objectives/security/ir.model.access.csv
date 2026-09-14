@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_shop_product_objective_user,shop.product.objective user,model_shop_product_objective,base.group_user,1,0,0,0
+access_shop_product_objective_line_user,shop.product.objective.line user,model_shop_product_objective_line,base.group_user,1,0,0,0
+access_shop_product_objective_manager,shop.product.objective manager,model_shop_product_objective,sales_team.group_sale_manager,1,1,1,1
+access_shop_product_objective_line_manager,shop.product.objective.line manager,model_shop_product_objective_line,sales_team.group_sale_manager,1,1,1,1
