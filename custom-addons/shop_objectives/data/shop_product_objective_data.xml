@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="objective_ganar_masa" model="shop.product.objective">
+        <field name="name">Ganar masa muscular</field>
+        <field name="slug">ganar-masa</field>
+        <field name="sequence">10</field>
+        <field name="short_description">Proteínas, creatina y carbohidratos para sumar volumen y fuerza.</field>
+        <field name="description" type="html"><p>Elegí los productos pensados para ganar masa muscular: proteínas de alto valor biológico, creatina para rendimiento y carbohidratos que te ayudan a sostener el volumen de entrenamiento.</p></field>
+    </record>
+    <record id="objective_ganar_masa_line_1" model="shop.product.objective.line"><field name="objective_id" ref="objective_ganar_masa"/><field name="product_tmpl_id" eval="162"/><field name="sequence">10</field><field name="featured" eval="True"/></record>
+    <record id="objective_ganar_masa_line_2" model="shop.product.objective.line"><field name="objective_id" ref="objective_ganar_masa"/><field name="product_tmpl_id" eval="166"/><field name="sequence">20</field><field name="featured" eval="True"/></record>
+    <record id="objective_ganar_masa_line_3" model="shop.product.objective.line"><field name="objective_id" ref="objective_ganar_masa"/><field name="product_tmpl_id" eval="173"/><field name="sequence">30</field><field name="featured" eval="True"/></record>
+    <record id="objective_ganar_masa_line_4" model="shop.product.objective.line"><field name="objective_id" ref="objective_ganar_masa"/><field name="product_tmpl_id" eval="186"/><field name="sequence">40</field></record>
+    <record id="objective_ganar_masa_line_5" model="shop.product.objective.line"><field name="objective_id" ref="objective_ganar_masa"/><field name="product_tmpl_id" eval="177"/><field name="sequence">50</field></record>
+
+    <record id="objective_definir" model="shop.product.objective">
+        <field name="name">Definir</field>
+        <field name="slug">definir</field>
+        <field name="sequence">20</field>
+        <field name="short_description">Proteína aislada, cafeína y antioxidantes para marcar sin perder músculo.</field>
+        <field name="description" type="html"><p>Productos pensados para la etapa de definición: proteínas aisladas bajas en carbohidratos, energizantes para sostener la intensidad del entrenamiento y antioxidantes que acompañan el proceso.</p></field>
+    </record>
+    <record id="objective_definir_line_1" model="shop.product.objective.line"><field name="objective_id" ref="objective_definir"/><field name="product_tmpl_id" eval="206"/><field name="sequence">10</field><field name="featured" eval="True"/></record>
+    <record id="objective_definir_line_2" model="shop.product.objective.line"><field name="objective_id" ref="objective_definir"/><field name="product_tmpl_id" eval="174"/><field name="sequence">20</field><field name="featured" eval="True"/></record>
+    <record id="objective_definir_line_3" model="shop.product.objective.line"><field name="objective_id" ref="objective_definir"/><field name="product_tmpl_id" eval="210"/><field name="sequence">30</field><field name="featured" eval="True"/></record>
+    <record id="objective_definir_line_4" model="shop.product.objective.line"><field name="objective_id" ref="objective_definir"/><field name="product_tmpl_id" eval="195"/><field name="sequence">40</field></record>
+    <record id="objective_definir_line_5" model="shop.product.objective.line"><field name="objective_id" ref="objective_definir"/><field name="product_tmpl_id" eval="156"/><field name="sequence">50</field></record>
+
+    <record id="objective_energia" model="shop.product.objective">
+        <field name="name">Tener más energía</field>
+        <field name="slug">energia</field>
+        <field name="sequence">30</field>
+        <field name="short_description">Pre-entrenos, cafeína y geles para rendir al máximo en cada sesión.</field>
+        <field name="description" type="html"><p>Si buscás un extra de energía antes o durante el entreno, esta selección incluye pre-entrenos, cafeína y geles energéticos.</p></field>
+    </record>
+    <record id="objective_energia_line_1" model="shop.product.objective.line"><field name="objective_id" ref="objective_energia"/><field name="product_tmpl_id" eval="159"/><field name="sequence">10</field><field name="featured" eval="True"/></record>
+    <record id="objective_energia_line_2" model="shop.product.objective.line"><field name="objective_id" ref="objective_energia"/><field name="product_tmpl_id" eval="195"/><field name="sequence">20</field><field name="featured" eval="True"/></record>
+    <record id="objective_energia_line_3" model="shop.product.objective.line"><field name="objective_id" ref="objective_energia"/><field name="product_tmpl_id" eval="185"/><field name="sequence">30</field><field name="featured" eval="True"/></record>
+    <record id="objective_energia_line_4" model="shop.product.objective.line"><field name="objective_id" ref="objective_energia"/><field name="product_tmpl_id" eval="194"/><field name="sequence">40</field></record>
+    <record id="objective_energia_line_5" model="shop.product.objective.line"><field name="objective_id" ref="objective_energia"/><field name="product_tmpl_id" eval="203"/><field name="sequence">50</field></record>
+
+    <record id="objective_recuperacion" model="shop.product.objective">
+        <field name="name">Mejorar recuperación</field>
+        <field name="slug">recuperacion</field>
+        <field name="sequence">40</field>
+        <field name="short_description">Colágeno, magnesio y aminoácidos para recuperar mejor entre entrenamientos.</field>
+        <field name="description" type="html"><p>Productos que ayudan a tu cuerpo a recuperarse después del esfuerzo: colágeno para articulaciones, magnesio y aminoácidos esenciales.</p></field>
+    </record>
+    <record id="objective_recuperacion_line_1" model="shop.product.objective.line"><field name="objective_id" ref="objective_recuperacion"/><field name="product_tmpl_id" eval="182"/><field name="sequence">10</field><field name="featured" eval="True"/></record>
+    <record id="objective_recuperacion_line_2" model="shop.product.objective.line"><field name="objective_id" ref="objective_recuperacion"/><field name="product_tmpl_id" eval="187"/><field name="sequence">20</field><field name="featured" eval="True"/></record>
+    <record id="objective_recuperacion_line_3" model="shop.product.objective.line"><field name="objective_id" ref="objective_recuperacion"/><field name="product_tmpl_id" eval="181"/><field name="sequence">30</field><field name="featured" eval="True"/></record>
+    <record id="objective_recuperacion_line_4" model="shop.product.objective.line"><field name="objective_id" ref="objective_recuperacion"/><field name="product_tmpl_id" eval="210"/><field name="sequence">40</field></record>
+    <record id="objective_recuperacion_line_5" model="shop.product.objective.line"><field name="objective_id" ref="objective_recuperacion"/><field name="product_tmpl_id" eval="199"/><field name="sequence">50</field></record>
+</odoo>

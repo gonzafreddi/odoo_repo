@@ -9,6 +9,10 @@
     "depends": ["sale_management"],
     "data": [
         "security/ir.model.access.csv",
+        "data/shop_product_objective_data.xml",
+        "views/shop_product_objective_views.xml",
+        "views/product_template_views.xml",
+        "views/shop_product_objective_menu.xml",
     ],
     "installable": True,
     "application": False,

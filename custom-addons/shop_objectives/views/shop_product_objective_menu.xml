@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_suplex_root" name="Suplex" sequence="60"/>
+    <menuitem id="menu_shop_objectives_root" name="Objetivos" parent="menu_suplex_root"
+              action="action_shop_product_objective" sequence="10"/>
+</odoo>

@@ -49,7 +49,7 @@ class TestShopObjectives(TransactionCase):
         first_objective = self._create_objective(slug="ganar-masa-muscular")
         second_objective = self._create_objective(
             name="Definir",
-            slug="definir",
+            slug="definir-prueba",
         )
 
         first_line = self.Line.create({
@@ -101,3 +101,13 @@ class TestShopObjectives(TransactionCase):
             })
         with self.assertRaises(AccessError):
             objective_as_user.unlink()
+
+    def test_seeded_objectives_have_active_curated_lines_and_feature_limit(self):
+        """Protect the business seed: each public objective stays usable."""
+        for slug in ("ganar-masa", "definir", "energia", "recuperacion"):
+            objective = self.Objective.search([("slug", "=", slug)])
+            self.assertEqual(len(objective), 1, "Missing seeded objective: %s" % slug)
+            self.assertTrue(objective.active)
+            active_lines = objective.line_ids.filtered("active")
+            self.assertGreaterEqual(len(active_lines), 3)
+            self.assertLessEqual(len(active_lines.filtered("featured")), 3)
