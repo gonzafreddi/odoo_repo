@@ -20,6 +20,7 @@ class TestExecutiveDashboardWebPayments(TransactionCase):
                 "product_id": product.id,
                 "product_uom_qty": 1,
                 "price_unit": 100.0,
+                "tax_ids": [Command.set([])],
             })],
         })
         order.action_confirm()

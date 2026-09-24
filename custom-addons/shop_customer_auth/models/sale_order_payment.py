@@ -1,6 +1,13 @@
+import logging
+
+from psycopg2 import IntegrityError
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare
+
+
+_logger = logging.getLogger(__name__)
 
 
 class ShopSalePaymentMethod(models.Model):
@@ -28,6 +35,12 @@ class ShopSalePayment(models.Model):
     _description = "Cobro de venta web"
     _order = "date desc, id desc"
     _check_company_auto = True
+
+    _mercadopago_reference_unique = models.UniqueIndex(
+        "(payment_method_id, reference) "
+        "WHERE reference IS NOT NULL AND state = 'confirmed'",
+        "A confirmed payment already uses this provider reference.",
+    )
 
     order_id = fields.Many2one(
         "sale.order", required=True, ondelete="restrict", index=True,
@@ -151,6 +164,123 @@ class SaleOrder(models.Model):
         string="Estado de cobro", compute="_compute_web_payment_totals",
         store=True,
     )
+
+    @api.model
+    def shop_register_online_payment(
+        self, order_id, provider, provider_payment_id, amount, currency_code,
+    ):
+        order = self.browse(order_id).exists()
+        if not order:
+            return self._online_payment_result(
+                "rejected", "order_not_found", False, order_id,
+            )
+        order.ensure_one()
+
+        method = False
+        if provider == "mercadopago":
+            method = self.env.ref(
+                "shop_customer_auth.payment_method_mercadopago",
+                raise_if_not_found=False,
+            )
+        else:
+            return self._online_payment_result(
+                "rejected", "unsupported_provider", False, order.id, order,
+            )
+        if not method:
+            return self._online_payment_result(
+                "rejected", "payment_method_not_configured", False, order.id, order,
+            )
+
+        reference = str(provider_payment_id)
+        payment_model = self.env["shop.sale.payment"]
+        existing = payment_model.search([
+            ("payment_method_id", "=", method.id),
+            ("reference", "=", reference),
+            ("state", "=", "confirmed"),
+        ], limit=1)
+        if existing:
+            return self._online_payment_result(
+                "already_registered", False, existing.id, order.id, order,
+            )
+        if order.state != "sale":
+            return self._online_payment_result(
+                "rejected", "order_not_confirmed", False, order.id, order,
+            )
+        if currency_code != order.currency_id.name:
+            return self._online_payment_result(
+                "rejected", "currency_mismatch", False, order.id, order,
+            )
+        if order.currency_id.compare_amounts(order.web_amount_due, 0.0) == 0:
+            return self._online_payment_result(
+                "rejected", "already_paid", False, order.id, order,
+            )
+        if float_compare(
+            amount, order.web_amount_due,
+            precision_rounding=order.currency_id.rounding,
+        ) != 0:
+            return self._online_payment_result(
+                "rejected", "amount_mismatch", False, order.id, order,
+            )
+
+        try:
+            with self.env.cr.savepoint():
+                payment = payment_model.create({
+                    "order_id": order.id,
+                    "payment_method_id": method.id,
+                    "amount": amount,
+                    "reference": reference,
+                })
+        except IntegrityError:
+            existing = payment_model.search([
+                ("payment_method_id", "=", method.id),
+                ("reference", "=", reference),
+                ("state", "=", "confirmed"),
+            ], limit=1)
+            if existing:
+                return self._online_payment_result(
+                    "already_registered", False, existing.id, order.id, order,
+                )
+            raise
+        order.message_post(body=_(
+            "Cobro Mercado Pago registrado: pago #%(payment_id)s, $%(amount)s",
+            payment_id=payment.id, amount=amount,
+        ))
+        return self._online_payment_result(
+            "created", False, payment.id, order.id, order,
+        )
+
+    @api.model
+    def _online_payment_result(self, status, reason, payment_id, order_id, order=False):
+        if status == "rejected":
+            _logger.warning(
+                "Mercado Pago payment rejected for order %s: %s", order_id, reason,
+            )
+        return {
+            "status": status,
+            "reason": reason or False,
+            "payment_id": payment_id or False,
+            "order_id": order_id,
+            "order_name": order.name if order else False,
+            "web_payment_state": order.web_payment_state if order else False,
+            "web_amount_due": order.web_amount_due if order else 0.0,
+        }
+
+    @api.model
+    def shop_get_payment_status(self, order_id):
+        order = self.browse(order_id).exists()
+        if not order:
+            return {"order_id": order_id, "found": False}
+        order.ensure_one()
+        return {
+            "order_id": order.id,
+            "found": True,
+            "order_name": order.name or False,
+            "state": order.state or False,
+            "amount_total": order.amount_total,
+            "web_amount_due": order.web_amount_due,
+            "web_payment_state": order.web_payment_state or False,
+            "currency_code": order.currency_id.name or False,
+        }
 
     @api.depends(
         "amount_total", "web_payment_ids.amount", "web_payment_ids.state"

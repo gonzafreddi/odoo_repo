@@ -25,7 +25,7 @@ class TestSaleOrderPayment(TransactionCase):
             "partner_id": self.partner.id,
             "order_line": [Command.create({
                 "product_id": self.product.id, "product_uom_qty": 1,
-                "price_unit": 100.0,
+                "price_unit": 100.0, "tax_ids": [Command.set([])],
             })],
         })
         order.action_confirm()
@@ -46,6 +46,68 @@ class TestSaleOrderPayment(TransactionCase):
         self.assertEqual(order.web_payment_state, "paid")
         self.assertEqual(order.web_amount_paid, 100.0)
         self.assertEqual(order.web_amount_due, 0.0)
+
+    def test_mercadopago_rpc_creates_payment(self):
+        order = self._order()
+        result = self.env["sale.order"].shop_register_online_payment(
+            order.id, "mercadopago", 12345, 100.0, order.currency_id.name,
+        )
+        self.assertEqual(result["status"], "created")
+        self.assertEqual(result["payment_id"], order.web_payment_ids.id)
+        self.assertEqual(order.web_payment_state, "paid")
+
+    def test_mercadopago_rpc_is_idempotent(self):
+        order = self._order()
+        model = self.env["sale.order"]
+        result1 = model.shop_register_online_payment(
+            order.id, "mercadopago", "mp-duplicate", 100.0, order.currency_id.name,
+        )
+        result2 = model.shop_register_online_payment(
+            order.id, "mercadopago", "mp-duplicate", 100.0, order.currency_id.name,
+        )
+        self.assertEqual(result1["status"], "created")
+        self.assertEqual(result2["status"], "already_registered")
+        self.assertEqual(result1["payment_id"], result2["payment_id"])
+        self.assertEqual(len(order.web_payment_ids), 1)
+
+    def test_mercadopago_rpc_rejects_amount_and_currency_mismatches(self):
+        order = self._order()
+        model = self.env["sale.order"]
+        self.assertEqual(model.shop_register_online_payment(
+            order.id, "mercadopago", "mp-amount", 99.0, order.currency_id.name,
+        )["reason"], "amount_mismatch")
+        other_currency = self.env["res.currency"].search([
+            ("id", "!=", order.currency_id.id), ("active", "=", True),
+        ], limit=1)
+        if other_currency:
+            self.assertEqual(model.shop_register_online_payment(
+                order.id, "mercadopago", "mp-currency", 100.0, other_currency.name,
+            )["reason"], "currency_mismatch")
+
+    def test_mercadopago_rpc_rejects_unconfirmed_paid_and_missing_orders(self):
+        model = self.env["sale.order"]
+        draft = self.env["sale.order"].create({"partner_id": self.partner.id})
+        self.assertEqual(model.shop_register_online_payment(
+            draft.id, "mercadopago", "mp-draft", 100.0, draft.currency_id.name,
+        )["reason"], "order_not_confirmed")
+        order = self._order()
+        self._register(order, 100.0)
+        self.assertEqual(model.shop_register_online_payment(
+            order.id, "mercadopago", "mp-paid", 100.0, order.currency_id.name,
+        )["reason"], "already_paid")
+        self.assertEqual(model.shop_register_online_payment(
+            999999999, "mercadopago", "mp-missing", 1.0, order.currency_id.name,
+        )["reason"], "order_not_found")
+
+    def test_payment_status_rpc_returns_snapshot(self):
+        order = self._order()
+        status = self.env["sale.order"].shop_get_payment_status(order.id)
+        self.assertTrue(status["found"])
+        self.assertEqual(status["order_id"], order.id)
+        self.assertEqual(status["state"], "sale")
+        self.assertEqual(status["web_payment_state"], "not_paid")
+        self.assertEqual(status["currency_code"], order.currency_id.name)
+        self.assertFalse(self.env["sale.order"].shop_get_payment_status(999999999)["found"])
 
     def test_partial_payment_keeps_remaining_balance(self):
         order = self._order()
