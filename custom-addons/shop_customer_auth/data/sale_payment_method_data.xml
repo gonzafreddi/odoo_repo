@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
-    <record id="payment_method_mercadopago" model="shop.sale.payment.method">
-        <field name="name">Mercado Pago</field>
-        <field name="reference_required">True</field>
-        <field name="sequence">50</field>
-    </record>
-</odoo>

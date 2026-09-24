@@ -43,7 +43,6 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
     'data': [
         'security/password_reset_security.xml',
         'security/ir.model.access.csv',
-        'data/sale_payment_method_data.xml',
         'data/password_reset_cron.xml',
         'data/product_defaults.xml',
         'views/customer_account_views.xml',

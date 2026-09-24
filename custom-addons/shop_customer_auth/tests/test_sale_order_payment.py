@@ -54,6 +54,8 @@ class TestSaleOrderPayment(TransactionCase):
         )
         self.assertEqual(result["status"], "created")
         self.assertEqual(result["payment_id"], order.web_payment_ids.id)
+        self.assertEqual(order.web_payment_ids.reference, "12345")
+        self.assertEqual(order.web_payment_ids.provider_payment_ref, "mercadopago:12345")
         self.assertEqual(order.web_payment_state, "paid")
 
     def test_mercadopago_rpc_is_idempotent(self):
@@ -69,6 +71,39 @@ class TestSaleOrderPayment(TransactionCase):
         self.assertEqual(result2["status"], "already_registered")
         self.assertEqual(result1["payment_id"], result2["payment_id"])
         self.assertEqual(len(order.web_payment_ids), 1)
+
+    def test_manual_payments_can_reuse_reference_across_orders(self):
+        order1 = self._order()
+        order2 = self._order()
+        self._register(order1, 100.0, self.transfer, "transf")
+        self._register(order2, 100.0, self.transfer, "transf")
+        self.assertEqual(len(order1.web_payment_ids | order2.web_payment_ids), 2)
+
+    def test_mercadopago_reuses_existing_method_and_reactivates_it(self):
+        method = self.env["shop.sale.payment.method"].create({
+            "name": "Mercado Pago", "company_id": self.env.company.id,
+            "active": False,
+        })
+        order = self._order()
+        result = self.env["sale.order"].shop_register_online_payment(
+            order.id, "mercadopago", "existing-method", 100.0,
+            order.currency_id.name,
+        )
+        self.assertEqual(result["status"], "created")
+        self.assertEqual(order.web_payment_ids.payment_method_id, method)
+        self.assertTrue(method.active)
+
+    def test_mercadopago_creates_method_when_missing(self):
+        order = self._order()
+        result = self.env["sale.order"].shop_register_online_payment(
+            order.id, "mercadopago", "new-method", 100.0,
+            order.currency_id.name,
+        )
+        self.assertEqual(result["status"], "created")
+        method = order.web_payment_ids.payment_method_id
+        self.assertEqual(method.name, "Mercado Pago")
+        self.assertTrue(method.reference_required)
+        self.assertEqual(method.sequence, 50)
 
     def test_mercadopago_rpc_rejects_amount_and_currency_mismatches(self):
         order = self._order()

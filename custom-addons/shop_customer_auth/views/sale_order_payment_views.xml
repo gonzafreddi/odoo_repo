@@ -57,6 +57,7 @@
                 <field name="amount"/>
                 <field name="currency_id" column_invisible="True"/>
                 <field name="reference"/>
+                <field name="provider_payment_ref" optional="hide"/>
                 <field name="user_id"/>
                 <field name="state" widget="badge"
                     decoration-success="state == 'confirmed'"
@@ -84,6 +85,7 @@
                         <field name="currency_id" invisible="1"/>
                         <field name="date"/>
                         <field name="reference"/>
+                        <field name="provider_payment_ref" readonly="1"/>
                         <field name="user_id"/>
                         <field name="company_id" groups="base.group_multi_company"/>
                     </group>

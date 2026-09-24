@@ -37,8 +37,8 @@ class ShopSalePayment(models.Model):
     _check_company_auto = True
 
     _mercadopago_reference_unique = models.UniqueIndex(
-        "(payment_method_id, reference) "
-        "WHERE reference IS NOT NULL AND state = 'confirmed'",
+        "(provider_payment_ref) "
+        "WHERE provider_payment_ref IS NOT NULL AND state = 'confirmed'",
         "A confirmed payment already uses this provider reference.",
     )
 
@@ -53,6 +53,9 @@ class ShopSalePayment(models.Model):
     amount = fields.Monetary(required=True, currency_field="currency_id")
     date = fields.Date(required=True, default=fields.Date.context_today, index=True)
     reference = fields.Char()
+    provider_payment_ref = fields.Char(
+        string="Referencia del proveedor", readonly=True, copy=False, index=False,
+    )
     user_id = fields.Many2one(
         "res.users", required=True, default=lambda self: self.env.user,
         ondelete="restrict",
@@ -176,26 +179,17 @@ class SaleOrder(models.Model):
             )
         order.ensure_one()
 
-        method = False
         if provider == "mercadopago":
-            method = self.env.ref(
-                "shop_customer_auth.payment_method_mercadopago",
-                raise_if_not_found=False,
-            )
+            method = self._get_online_payment_method(provider, order.company_id)
         else:
             return self._online_payment_result(
                 "rejected", "unsupported_provider", False, order.id, order,
             )
-        if not method:
-            return self._online_payment_result(
-                "rejected", "payment_method_not_configured", False, order.id, order,
-            )
-
         reference = str(provider_payment_id)
+        provider_reference = "mercadopago:%s" % reference
         payment_model = self.env["shop.sale.payment"]
         existing = payment_model.search([
-            ("payment_method_id", "=", method.id),
-            ("reference", "=", reference),
+            ("provider_payment_ref", "=", provider_reference),
             ("state", "=", "confirmed"),
         ], limit=1)
         if existing:
@@ -229,11 +223,11 @@ class SaleOrder(models.Model):
                     "payment_method_id": method.id,
                     "amount": amount,
                     "reference": reference,
+                    "provider_payment_ref": provider_reference,
                 })
         except IntegrityError:
             existing = payment_model.search([
-                ("payment_method_id", "=", method.id),
-                ("reference", "=", reference),
+                ("provider_payment_ref", "=", provider_reference),
                 ("state", "=", "confirmed"),
             ], limit=1)
             if existing:
@@ -248,6 +242,28 @@ class SaleOrder(models.Model):
         return self._online_payment_result(
             "created", False, payment.id, order.id, order,
         )
+
+    @api.model
+    def _get_online_payment_method(self, provider, company):
+        if provider != "mercadopago":
+            return self.env["shop.sale.payment.method"]
+        method_model = self.env["shop.sale.payment.method"].sudo().with_context(
+            active_test=False
+        )
+        method = method_model.search([
+            ("company_id", "=", company.id),
+            ("name", "=ilike", "Mercado Pago"),
+        ], limit=1)
+        if method:
+            if not method.active:
+                method.write({"active": True})
+            return method
+        return method_model.create({
+            "name": "Mercado Pago",
+            "company_id": company.id,
+            "reference_required": True,
+            "sequence": 50,
+        })
 
     @api.model
     def _online_payment_result(self, status, reason, payment_id, order_id, order=False):
