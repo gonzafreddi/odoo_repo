@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 from psycopg2 import IntegrityError
 
@@ -72,6 +73,22 @@ class ShopSalePayment(models.Model):
         [("confirmed", "Confirmado"), ("cancelled", "Anulado")],
         required=True, default="confirmed", index=True,
     )
+    # Detalle informado por Mercado Pago al registrar el cobro.
+    mp_payment_type = fields.Char(string="Tipo de pago", readonly=True, copy=False)
+    mp_payment_method = fields.Char(string="Medio de pago", readonly=True, copy=False)
+    mp_card_last_four = fields.Char(string="Tarjeta (últimos 4)", readonly=True, copy=False)
+    mp_installments = fields.Integer(string="Cuotas", readonly=True, copy=False)
+    mp_payer_name = fields.Char(string="Pagador", readonly=True, copy=False)
+    mp_payer_email = fields.Char(string="Email del pagador", readonly=True, copy=False)
+    mp_date_approved = fields.Datetime(string="Aprobado el", readonly=True, copy=False)
+    mp_fee_amount = fields.Monetary(
+        string="Comisión Mercado Pago", currency_field="currency_id",
+        readonly=True, copy=False,
+    )
+    mp_net_amount = fields.Monetary(
+        string="Neto recibido", currency_field="currency_id",
+        readonly=True, copy=False,
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -122,6 +139,11 @@ class ShopSalePayment(models.Model):
                 )
 
     def write(self, values):
+        if (
+            self.env.context.get("shop_payment_details")
+            and all(key.startswith("mp_") for key in values)
+        ):
+            return super().write(values)
         if self and not self.env.context.get("shop_cancel_payment"):
             raise UserError(
                 _("Los cobros registrados no se modifican; deben anularse.")
@@ -171,6 +193,7 @@ class SaleOrder(models.Model):
     @api.model
     def shop_register_online_payment(
         self, order_id, provider, provider_payment_id, amount, currency_code,
+        details=None,
     ):
         order = self.browse(order_id).exists()
         if not order:
@@ -188,11 +211,15 @@ class SaleOrder(models.Model):
         reference = str(provider_payment_id)
         provider_reference = "mercadopago:%s" % reference
         payment_model = self.env["shop.sale.payment"]
+        detail_vals = self._prepare_mercadopago_details(details)
         existing = payment_model.search([
             ("provider_payment_ref", "=", provider_reference),
             ("state", "=", "confirmed"),
         ], limit=1)
         if existing:
+            # Completa el detalle de cobros registrados antes de guardarlo.
+            if detail_vals and not existing.mp_payment_type:
+                existing.with_context(shop_payment_details=True).write(detail_vals)
             return self._online_payment_result(
                 "already_registered", False, existing.id, order.id, order,
             )
@@ -224,6 +251,7 @@ class SaleOrder(models.Model):
                     "amount": amount,
                     "reference": reference,
                     "provider_payment_ref": provider_reference,
+                    **detail_vals,
                 })
         except IntegrityError:
             existing = payment_model.search([
@@ -242,6 +270,88 @@ class SaleOrder(models.Model):
         return self._online_payment_result(
             "created", False, payment.id, order.id, order,
         )
+
+    _MP_PAYMENT_TYPES = {
+        "credit_card": "Tarjeta de crédito",
+        "debit_card": "Tarjeta de débito",
+        "prepaid_card": "Tarjeta prepaga",
+        "account_money": "Dinero en cuenta",
+        "ticket": "Efectivo",
+        "bank_transfer": "Transferencia",
+        "atm": "Cajero",
+        "digital_currency": "Mercado Crédito",
+        "consumer_credits": "Mercado Crédito",
+    }
+    _MP_PAYMENT_METHODS = {
+        "visa": "Visa",
+        "debvisa": "Visa Débito",
+        "master": "Mastercard",
+        "debmaster": "Mastercard Débito",
+        "amex": "American Express",
+        "naranja": "Naranja",
+        "cabal": "Cabal",
+        "debcabal": "Cabal Débito",
+        "maestro": "Maestro",
+        "account_money": "Dinero en cuenta",
+        "consumer_credits": "Mercado Crédito",
+        "pagofacil": "Pago Fácil",
+        "rapipago": "Rapipago",
+    }
+
+    @api.model
+    def _prepare_mercadopago_details(self, details):
+        if not isinstance(details, dict):
+            return {}
+
+        def text(key):
+            value = details.get(key)
+            return str(value).strip()[:255] if value not in (None, False, "") else False
+
+        def number(key):
+            try:
+                return float(details.get(key))
+            except (TypeError, ValueError):
+                return False
+
+        payment_type = text("payment_type_id")
+        payment_method = text("payment_method_id")
+        vals = {
+            "mp_payment_type": payment_type and self._MP_PAYMENT_TYPES.get(
+                payment_type, payment_type
+            ),
+            "mp_payment_method": payment_method and self._MP_PAYMENT_METHODS.get(
+                payment_method, payment_method.capitalize()
+            ),
+            "mp_card_last_four": text("card_last_four"),
+            "mp_payer_name": text("payer_name"),
+            "mp_payer_email": text("payer_email"),
+            "mp_date_approved": self._parse_mercadopago_datetime(
+                details.get("date_approved")
+            ),
+        }
+        installments = number("installments")
+        if installments:
+            vals["mp_installments"] = int(installments)
+        for key, field in (
+            ("fee_amount", "mp_fee_amount"),
+            ("net_received_amount", "mp_net_amount"),
+        ):
+            value = number(key)
+            if value is not False:
+                vals[field] = value
+        return {key: value for key, value in vals.items() if value is not False}
+
+    @api.model
+    def _parse_mercadopago_datetime(self, value):
+        if not isinstance(value, str) or not value:
+            return False
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return False
+        if parsed.tzinfo:
+            parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        return parsed.replace(microsecond=0)
 
     @api.model
     def _get_online_payment_method(self, provider, company):

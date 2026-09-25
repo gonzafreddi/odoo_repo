@@ -57,6 +57,10 @@
                 <field name="amount"/>
                 <field name="currency_id" column_invisible="True"/>
                 <field name="reference"/>
+                <field name="mp_payment_type" optional="show"/>
+                <field name="mp_payment_method" optional="hide"/>
+                <field name="mp_installments" optional="hide"/>
+                <field name="mp_net_amount" optional="hide"/>
                 <field name="provider_payment_ref" optional="hide"/>
                 <field name="user_id"/>
                 <field name="state" widget="badge"
@@ -88,6 +92,21 @@
                         <field name="provider_payment_ref" readonly="1"/>
                         <field name="user_id"/>
                         <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                    <group string="Detalle Mercado Pago" invisible="not mp_payment_type">
+                        <group>
+                            <field name="mp_payment_type"/>
+                            <field name="mp_payment_method"/>
+                            <field name="mp_card_last_four" invisible="not mp_card_last_four"/>
+                            <field name="mp_installments" invisible="not mp_installments"/>
+                            <field name="mp_date_approved"/>
+                        </group>
+                        <group>
+                            <field name="mp_payer_name" invisible="not mp_payer_name"/>
+                            <field name="mp_payer_email" invisible="not mp_payer_email"/>
+                            <field name="mp_fee_amount"/>
+                            <field name="mp_net_amount"/>
+                        </group>
                     </group>
                 </sheet>
             </form>
@@ -189,6 +208,11 @@
                             <field name="amount"/>
                             <field name="currency_id" column_invisible="True"/>
                             <field name="reference"/>
+                            <field name="mp_payment_type" optional="show"/>
+                            <field name="mp_payment_method" optional="show"/>
+                            <field name="mp_card_last_four" optional="hide"/>
+                            <field name="mp_installments" optional="show"/>
+                            <field name="mp_net_amount" optional="show"/>
                             <field name="user_id"/>
                             <field name="state" widget="badge"
                                 decoration-success="state == 'confirmed'"

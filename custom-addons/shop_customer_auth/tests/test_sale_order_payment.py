@@ -72,6 +72,63 @@ class TestSaleOrderPayment(TransactionCase):
         self.assertEqual(result1["payment_id"], result2["payment_id"])
         self.assertEqual(len(order.web_payment_ids), 1)
 
+    def test_mercadopago_rpc_stores_payment_details(self):
+        order = self._order()
+        details = {
+            "payment_type_id": "credit_card",
+            "payment_method_id": "master",
+            "card_last_four": "4321",
+            "installments": 3,
+            "payer_name": "Juan Pérez",
+            "payer_email": "juan@example.com",
+            "date_approved": "2026-09-24T16:02:11.000-04:00",
+            "fee_amount": 7.5,
+            "net_received_amount": 92.5,
+        }
+        self.env["sale.order"].shop_register_online_payment(
+            order.id, "mercadopago", "mp-details", 100.0,
+            order.currency_id.name, details,
+        )
+        payment = order.web_payment_ids
+        self.assertEqual(payment.mp_payment_type, "Tarjeta de crédito")
+        self.assertEqual(payment.mp_payment_method, "Mastercard")
+        self.assertEqual(payment.mp_card_last_four, "4321")
+        self.assertEqual(payment.mp_installments, 3)
+        self.assertEqual(payment.mp_payer_name, "Juan Pérez")
+        self.assertEqual(payment.mp_payer_email, "juan@example.com")
+        self.assertEqual(str(payment.mp_date_approved), "2026-09-24 20:02:11")
+        self.assertEqual(payment.mp_fee_amount, 7.5)
+        self.assertEqual(payment.mp_net_amount, 92.5)
+
+    def test_mercadopago_rpc_backfills_details_once(self):
+        order = self._order()
+        model = self.env["sale.order"]
+        model.shop_register_online_payment(
+            order.id, "mercadopago", "mp-backfill", 100.0, order.currency_id.name,
+        )
+        payment = order.web_payment_ids
+        self.assertFalse(payment.mp_payment_type)
+        result = model.shop_register_online_payment(
+            order.id, "mercadopago", "mp-backfill", 100.0,
+            order.currency_id.name, {"payment_type_id": "account_money"},
+        )
+        self.assertEqual(result["status"], "already_registered")
+        self.assertEqual(payment.mp_payment_type, "Dinero en cuenta")
+        model.shop_register_online_payment(
+            order.id, "mercadopago", "mp-backfill", 100.0,
+            order.currency_id.name, {"payment_type_id": "credit_card"},
+        )
+        self.assertEqual(payment.mp_payment_type, "Dinero en cuenta")
+
+    def test_payment_details_do_not_unlock_other_fields(self):
+        order = self._order()
+        self._register(order, 100.0)
+        payment = order.web_payment_ids
+        with self.assertRaises(UserError):
+            payment.with_context(shop_payment_details=True).write({
+                "amount": 50.0,
+            })
+
     def test_manual_payments_can_reuse_reference_across_orders(self):
         order1 = self._order()
         order2 = self._order()
@@ -79,7 +136,16 @@ class TestSaleOrderPayment(TransactionCase):
         self._register(order2, 100.0, self.transfer, "transf")
         self.assertEqual(len(order1.web_payment_ids | order2.web_payment_ids), 2)
 
+    def _hide_existing_mercadopago_methods(self):
+        # La base puede traer ya un medio "Mercado Pago"; se aparta dentro del test.
+        self.env["shop.sale.payment.method"].with_context(active_test=False).search([
+            ("company_id", "=", self.env.company.id),
+            ("name", "=ilike", "Mercado Pago"),
+        ]).write({"name": "Mercado Pago (previo)"})
+        self.env.flush_all()
+
     def test_mercadopago_reuses_existing_method_and_reactivates_it(self):
+        self._hide_existing_mercadopago_methods()
         method = self.env["shop.sale.payment.method"].create({
             "name": "Mercado Pago", "company_id": self.env.company.id,
             "active": False,
@@ -94,6 +160,7 @@ class TestSaleOrderPayment(TransactionCase):
         self.assertTrue(method.active)
 
     def test_mercadopago_creates_method_when_missing(self):
+        self._hide_existing_mercadopago_methods()
         order = self._order()
         result = self.env["sale.order"].shop_register_online_payment(
             order.id, "mercadopago", "new-method", 100.0,

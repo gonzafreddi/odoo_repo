@@ -7,7 +7,7 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
     'author': "My Company",
     'website': "https://www.yourcompany.com",
     'category': 'Uncategorized',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.3.0',
     'license': 'LGPL-3',
     'depends': [
         'base',
