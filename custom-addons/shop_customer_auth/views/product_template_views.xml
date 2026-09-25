@@ -13,6 +13,8 @@
                 <field name="offer_active"/>
                 <field name="offer_price" widget="monetary"
                     options="{'currency_field': 'currency_id', 'field_digits': True}"/>
+                <field name="combo_cost" widget="monetary" invisible="type != 'combo'"
+                    options="{'currency_field': 'cost_currency_id'}"/>
                 <field name="margin_percentage" widget="percentage"/>
             </xpath>
         </field>
@@ -30,6 +32,8 @@
                 <field name="offer_active" optional="show"/>
                 <field name="offer_price" widget="monetary"
                     options="{'currency_field': 'currency_id'}" optional="show"/>
+                <field name="combo_cost" widget="monetary" optional="show"
+                    options="{'currency_field': 'cost_currency_id'}" invisible="type != 'combo'"/>
                 <field name="margin_percentage" widget="percentage"/>
             </field>
         </field>
