@@ -202,6 +202,15 @@ class SaleOrder(models.Model):
     web_payment_ids = fields.One2many(
         "shop.sale.payment", "order_id", string="Cobros web",
     )
+    web_payment_preference = fields.Selection(
+        [
+            ("card", "Tarjeta / Mercado Pago"),
+            ("cash", "Efectivo / Transferencia"),
+        ],
+        string="Medio elegido en la web", readonly=True, copy=False,
+        help="Medio de pago que eligió el cliente al confirmar en la tienda online. "
+             "Efectivo y transferencia llevan el descuento en cada línea.",
+    )
     web_amount_paid = fields.Monetary(
         string="Cobrado", compute="_compute_web_payment_totals",
         currency_field="currency_id", store=True,
@@ -439,6 +448,7 @@ class SaleOrder(models.Model):
             "amount_total": order.amount_total,
             "web_amount_due": order.web_amount_due,
             "web_payment_state": order.web_payment_state or False,
+            "web_payment_preference": order.web_payment_preference or False,
             "currency_code": order.currency_id.name or False,
         }
 

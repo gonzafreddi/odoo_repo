@@ -142,6 +142,7 @@
         <field name="inherit_id" ref="sale.sale_order_tree"/>
         <field name="arch" type="xml">
             <field name="amount_total" position="after">
+                <field name="web_payment_preference" optional="hide"/>
                 <field name="web_payment_state"
                     string="Estado de cobro"
                     widget="badge"
@@ -198,6 +199,7 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Cobros web" name="web_payments">
                     <group>
+                        <field name="web_payment_preference" invisible="not web_payment_preference"/>
                         <field name="web_amount_paid"/>
                         <field name="web_amount_due"/>
                     </group>

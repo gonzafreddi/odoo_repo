@@ -1,4 +1,5 @@
-from odoo import fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class ResConfigSettings(models.TransientModel):
@@ -22,3 +23,18 @@ class ResConfigSettings(models.TransientModel):
         default=3500.0,
         help="Costo de envío que muestra la tienda online cuando el subtotal no alcanza el umbral.",
     )
+    x_cash_discount_percent = fields.Float(
+        string="Descuento efectivo / transferencia (%)",
+        config_parameter="shop_config.cash_discount_percent",
+        default=0.0,
+        help="Descuento sobre el precio con tarjeta (o de oferta) para pagos en "
+             "efectivo o transferencia. Se aplica en la tienda online y en el POS.",
+    )
+
+    @api.constrains("x_cash_discount_percent")
+    def _check_cash_discount_percent(self):
+        for settings in self:
+            if not 0 <= settings.x_cash_discount_percent < 100:
+                raise ValidationError(
+                    _("El descuento de efectivo debe estar entre 0 y 99,99 %.")
+                )

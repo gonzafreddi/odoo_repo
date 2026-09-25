@@ -194,6 +194,12 @@ class TestSaleOrderPayment(TransactionCase):
         self.assertEqual(status["state"], "sale")
         self.assertEqual(status["web_payment_state"], "not_paid")
         self.assertEqual(status["currency_code"], order.currency_id.name)
+        self.assertFalse(status["web_payment_preference"])
+        order.web_payment_preference = "cash"
+        self.assertEqual(
+            self.env["sale.order"].shop_get_payment_status(order.id)["web_payment_preference"],
+            "cash",
+        )
         self.assertFalse(self.env["sale.order"].shop_get_payment_status(999999999)["found"])
 
     def test_partial_payment_keeps_remaining_balance(self):

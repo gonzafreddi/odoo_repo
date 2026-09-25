@@ -7,7 +7,7 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
     'author': "My Company",
     'website': "https://www.yourcompany.com",
     'category': 'Uncategorized',
-    'version': '19.0.1.4.0',
+    'version': '19.0.1.5.0',
     'license': 'LGPL-3',
     'depends': [
         'base',
@@ -30,6 +30,8 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
             'shop_customer_auth/static/src/pos/customer_account.js',
             'shop_customer_auth/static/src/pos/customer_account.xml',
             'shop_customer_auth/static/src/pos/customer_account.scss',
+            'shop_customer_auth/static/src/pos/cash_discount.js',
+            'shop_customer_auth/static/src/pos/cash_discount.xml',
         ],
         'web.assets_backend': [
             'shop_customer_auth/static/src/dashboard/executive_dashboard.js',
