@@ -20,6 +20,10 @@
                         </div>
                     </div>
                 </setting>
+                <setting id="suplex_mercadopago_paused" string="Pausar Mercado Pago (tienda online)"
+                         help="Tildalo si hay un problema con Mercado Pago: la web deja de ofrecer el botón de pago y los pedidos se coordinan por WhatsApp.">
+                    <field name="x_mercadopago_paused"/>
+                </setting>
                 <setting id="suplex_card_surcharge" string="Recargo tarjeta / Mercado Pago"
                          help="Efectivo y transferencia = precio de lista (u oferta). Tarjeta y Mercado Pago pagan este % más, en la web y en el POS.">
                     <div class="content-group">

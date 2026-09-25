@@ -23,6 +23,13 @@ class ResConfigSettings(models.TransientModel):
         default=3500.0,
         help="Costo de envío que muestra la tienda online cuando el subtotal no alcanza el umbral.",
     )
+    x_mercadopago_paused = fields.Boolean(
+        string="Pausar Mercado Pago en la tienda online",
+        config_parameter="shop_config.mercadopago_paused",
+        help="Si está tildado, la tienda online deja de ofrecer el pago con Mercado Pago "
+             "y los pedidos se coordinan por WhatsApp. Los pagos ya hechos se siguen "
+             "registrando.",
+    )
     x_card_surcharge_percent = fields.Float(
         string="Recargo tarjeta / Mercado Pago (%)",
         config_parameter="shop_config.card_surcharge_percent",
