@@ -94,6 +94,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
             by_product_channel[(line.product_id.id, "other")]["units"] += quantity
         for order in store_orders:
             conversion_date = fields.Date.to_date(order.date_order)
+            combo_key = None
             for line in order.order_line.filtered(
                 lambda item: not item.display_type and item.product_id
             ):
@@ -113,10 +114,23 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 by_category[(category.id, category.display_name)]["units"] += quantity
                 by_product[(line.product_id.id, line.product_id.display_name)]["amount"] += amount
                 by_product[(line.product_id.id, line.product_id.display_name)]["units"] += quantity
-                by_product[(line.product_id.id, line.product_id.display_name)]["cost"] += (
-                    quantity * line.product_id.with_company(company).standard_price
-                )
-                by_product[(line.product_id.id, line.product_id.display_name)]["category"] = category.display_name
+                # La tienda web manda el combo con su precio y detrás sus
+                # componentes a $0: el costo de esos componentes es del combo.
+                product_key = (line.product_id.id, line.product_id.display_name)
+                if line.product_id.type == "combo":
+                    combo_key = product_key
+                    combo_prefix = f"{line.product_id.name} - "
+                elif not (
+                    combo_key
+                    and line.order_id.currency_id.is_zero(line.price_unit)
+                    and (line.name or "").startswith(combo_prefix)
+                ):
+                    combo_key = None
+                if line.product_id.type != "combo":
+                    by_product[combo_key or product_key]["cost"] += (
+                        quantity * line.product_id.with_company(company).standard_price
+                    )
+                by_product[product_key]["category"] = category.display_name
                 by_product_channel[(line.product_id.id, "store")]["amount"] += amount
                 by_product_channel[(line.product_id.id, "store")]["units"] += quantity
         for order in pos_orders:
