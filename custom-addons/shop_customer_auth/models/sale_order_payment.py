@@ -30,6 +30,36 @@ class ShopSalePaymentMethod(models.Model):
         "Ya existe un medio de cobro web con ese nombre en la compañía.",
     )
 
+    def _fixed_mercadopago_method(self):
+        return self.env.ref(
+            "shop_customer_auth.payment_method_mercadopago",
+            raise_if_not_found=False,
+        )
+
+    def write(self, values):
+        fixed = self._fixed_mercadopago_method()
+        if fixed and fixed in self:
+            locked = {
+                "name": fixed.name,
+                "active": True,
+                "company_id": fixed.company_id.id,
+            }
+            if any(
+                key in values and values[key] != current
+                for key, current in locked.items()
+            ):
+                raise UserError(_(
+                    "Mercado Pago es un medio de cobro fijo: no se puede "
+                    "renombrar, archivar ni cambiar de compañía."
+                ))
+        return super().write(values)
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_except_fixed_mercadopago(self):
+        fixed = self._fixed_mercadopago_method()
+        if fixed and fixed in self:
+            raise UserError(_("Mercado Pago es un medio de cobro fijo y no se puede eliminar."))
+
 
 class ShopSalePayment(models.Model):
     _name = "shop.sale.payment"
@@ -360,6 +390,10 @@ class SaleOrder(models.Model):
         method_model = self.env["shop.sale.payment.method"].sudo().with_context(
             active_test=False
         )
+        fixed = method_model._fixed_mercadopago_method()
+        if fixed and fixed.company_id == company:
+            return fixed.sudo()
+        # Otras compañías: se reutiliza o crea un medio con el mismo nombre.
         method = method_model.search([
             ("company_id", "=", company.id),
             ("name", "=ilike", "Mercado Pago"),

@@ -91,6 +91,87 @@
                     </div>
                 </section>
 
+                <section class="dashboard_panel mp_panel" aria-labelledby="mercadopago-title" t-if="state.data.mercadopago">
+                    <t t-set="mp" t-value="state.data.mercadopago"/>
+                    <div class="panel_heading">
+                        <div><span class="section_code">MERCADO PAGO</span><h2 id="mercadopago-title">Cobros con Mercado Pago</h2></div>
+                        <button t-if="mp.count" t-on-click="() => this.openRecords('mercadopago_payments')">Ver cobros en Odoo</button>
+                    </div>
+                    <p t-if="!mp.count" class="mp_empty">No hubo cobros con Mercado Pago en el período.</p>
+                    <t t-else="">
+                        <div class="mp_summary">
+                            <article>
+                                <span>Cobrado</span>
+                                <strong t-esc="formatMoney(mp.amount)"/>
+                                <small><t t-esc="formatNumber(mp.count)"/> pagos · <em t-att-class="comparisonClass(state.data.comparisons.mercadopago_amount)"><t t-esc="comparison(state.data.comparisons.mercadopago_amount)"/> vs. anterior</em></small>
+                            </article>
+                            <article class="is-cost">
+                                <span>Comisiones</span>
+                                <strong t-esc="formatMoney(mp.fees)"/>
+                                <small><t t-esc="formatPercentage(mp.fee_percent)"/> de lo cobrado · <em t-att-class="comparisonClass(state.data.comparisons.mercadopago_fees, true)"><t t-esc="comparison(state.data.comparisons.mercadopago_fees)"/> vs. anterior</em></small>
+                            </article>
+                            <article>
+                                <span>Neto recibido</span>
+                                <strong t-esc="formatMoney(mp.net)"/>
+                                <small>Cobrado menos comisiones</small>
+                            </article>
+                            <article>
+                                <span>Cuotas más usadas</span>
+                                <strong t-esc="mp.most_used_installments ? formatInstallments(mp.most_used_installments) : '—'"/>
+                                <small>Promedio: <t t-esc="mp.average_installments ? mp.average_installments.toLocaleString(undefined, { maximumFractionDigits: 1 }) : '—'"/></small>
+                            </article>
+                        </div>
+                        <div class="mp_tables">
+                            <div class="table_scroll">
+                                <h3>Por tipo de pago</h3>
+                                <table>
+                                    <thead><tr><th>Tipo</th><th>Pagos</th><th>Cobrado</th><th>Part.</th><th>Comisión</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="mp.by_type" t-as="row" t-key="row.name">
+                                            <th t-esc="row.name"/>
+                                            <td t-esc="formatNumber(row.count)"/>
+                                            <td t-esc="formatMoney(row.amount)"/>
+                                            <td t-esc="formatPercentage(row.share)"/>
+                                            <td><t t-esc="formatMoney(row.fees)"/> <small>(<t t-esc="formatPercentage(row.fee_percent)"/>)</small></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="table_scroll">
+                                <h3>Por cuotas</h3>
+                                <table>
+                                    <thead><tr><th>Cuotas</th><th>Pagos</th><th>Cobrado</th><th>Part.</th><th>Comisión</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="mp.by_installments" t-as="row" t-key="row.installments" t-att-class="row.installments === mp.most_used_installments ? 'is-top' : ''">
+                                            <th t-esc="formatInstallments(row.installments)"/>
+                                            <td t-esc="formatNumber(row.count)"/>
+                                            <td t-esc="formatMoney(row.amount)"/>
+                                            <td t-esc="formatPercentage(row.share)"/>
+                                            <td><t t-esc="formatMoney(row.fees)"/> <small>(<t t-esc="formatPercentage(row.fee_percent)"/>)</small></td>
+                                        </tr>
+                                        <tr t-if="!mp.by_installments.length"><td colspan="5">Sin datos de cuotas.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="table_scroll">
+                                <h3>Por medio / tarjeta</h3>
+                                <table>
+                                    <thead><tr><th>Medio</th><th>Pagos</th><th>Cobrado</th><th>Part.</th><th>Comisión</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="mp.by_method" t-as="row" t-key="row.name">
+                                            <th t-esc="row.name"/>
+                                            <td t-esc="formatNumber(row.count)"/>
+                                            <td t-esc="formatMoney(row.amount)"/>
+                                            <td t-esc="formatPercentage(row.share)"/>
+                                            <td><t t-esc="formatMoney(row.fees)"/> <small>(<t t-esc="formatPercentage(row.fee_percent)"/>)</small></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+                </section>
+
                 <div t-if="!state.data.categories.length &amp;&amp; !state.data.expense_accounts.length" class="empty_state">
                     <strong>No hay movimientos en este período.</strong>
                     <span>Probá ampliar las fechas. La foto de stock sigue disponible en los indicadores.</span>
@@ -170,11 +251,12 @@
                             </span>
                         </article>
                     </section>
-                    <p class="profitability_explanation">Esta vista calcula la rentabilidad descontando de las ventas el costo de la mercadería efectivamente vendida y los gastos. A diferencia de la Vista ejecutiva, no resta las compras del período, porque comprar mercadería aumenta el stock y no representa un costo hasta que esa mercadería se vende.</p>
+                    <p class="profitability_explanation">Esta vista calcula la rentabilidad descontando de las ventas el costo de la mercadería efectivamente vendida, los gastos y las comisiones que cobra Mercado Pago. A diferencia de la Vista ejecutiva, no resta las compras del período, porque comprar mercadería aumenta el stock y no representa un costo hasta que esa mercadería se vende.</p>
                     <section class="profitability_formula" aria-label="Composición del resultado operativo">
                         <span><b t-esc="formatMoney(state.data.metrics.sales)"/> Ventas</span>
                         <i>−</i><span><b t-esc="formatMoney(state.data.metrics.cost_of_goods_sold)"/> Costo vendido</span>
                         <i>−</i><span><b t-esc="formatMoney(state.data.metrics.expenses)"/> Gastos</span>
+                        <i>−</i><span><b t-esc="formatMoney(state.data.metrics.mercadopago_fees)"/> Comisiones Mercado Pago</span>
                         <i>=</i><span class="result"><b t-esc="formatMoney(state.data.metrics.profitability_operating_result)"/> Resultado operativo</span>
                     </section>
                     <section class="dashboard_panel profitability_panel" aria-labelledby="profitability-ranking-title">
@@ -261,14 +343,18 @@
                                 <th>Fecha de cobro</th>
                                 <th t-foreach="state.webDailyData.payment_method_names" t-as="methodName" t-key="methodName" t-esc="methodName"/>
                                 <th>Total cobrado</th>
+                                <th>Comisión MP</th>
+                                <th>Neto</th>
                             </tr></thead>
                             <tbody>
                                 <tr t-foreach="state.webDailyData.rows" t-as="row" t-key="row.date">
                                     <th t-esc="formatDate(row.date)"/>
                                     <td t-foreach="state.webDailyData.payment_method_names" t-as="methodName" t-key="methodName" t-esc="formatMoney(methodAmount(row, methodName))"/>
                                     <td><strong t-esc="formatMoney(row.total)"/></td>
+                                    <td t-esc="formatMoney(row.mercadopago_fees)"/>
+                                    <td t-esc="formatMoney(row.net)"/>
                                 </tr>
-                                <tr t-if="!state.webDailyData.rows.length"><td t-att-colspan="state.webDailyData.payment_method_names.length + 2">No hay cobros web confirmados en el período seleccionado.</td></tr>
+                                <tr t-if="!state.webDailyData.rows.length"><td t-att-colspan="state.webDailyData.payment_method_names.length + 4">No hay cobros web confirmados en el período seleccionado.</td></tr>
                             </tbody>
                         </table>
                     </div>

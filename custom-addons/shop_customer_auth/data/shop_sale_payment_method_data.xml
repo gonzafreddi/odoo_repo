@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Medio fijo: lo usan los cobros que llegan desde Mercado Pago. -->
+    <record id="payment_method_mercadopago" model="shop.sale.payment.method">
+        <field name="name">Mercado Pago</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="reference_required" eval="True"/>
+        <field name="sequence">50</field>
+    </record>
+</odoo>

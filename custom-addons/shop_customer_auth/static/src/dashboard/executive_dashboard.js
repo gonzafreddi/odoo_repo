@@ -356,6 +356,7 @@ export class ExecutiveDashboard extends Component {
         return [
             { key: "sales", label: "Ventas", value: this.formatMoney(metrics.sales), comparison: comparisons.sales },
             { key: "expenses", label: "Gastos registrados", value: this.formatMoney(metrics.expenses), comparison: comparisons.expenses, inverse: true, action: "expenses" },
+            { key: "mercadopago_fees", label: "Comisiones Mercado Pago", value: this.formatMoney(metrics.mercadopago_fees), comparison: comparisons.mercadopago_fees, inverse: true, action: "mercadopago_payments" },
             { key: "purchases", label: "Compras / inversión", value: this.formatMoney(metrics.purchases), comparison: comparisons.purchases, inverse: true, action: "purchases" },
             { key: "stock", label: "Stock a precio de venta", value: this.formatMoney(metrics.stock_value), snapshot: true, action: "stock" },
             { key: "result", label: "Resultado operativo estimado", value: this.formatMoney(metrics.operating_result), comparison: comparisons.operating_result },
@@ -384,8 +385,13 @@ export class ExecutiveDashboard extends Component {
             { key: "gross_margin", label: "Margen bruto", value: this.formatMoney(metrics.gross_margin), comparison: comparisons.gross_margin },
             { key: "gross_margin_percent", label: "Margen bruto %", value: this.formatPercentage(metrics.gross_margin_percent) },
             { key: "expenses", label: "Gastos", value: this.formatMoney(metrics.expenses), comparison: comparisons.expenses, inverse: true },
+            { key: "mercadopago_fees", label: "Comisiones Mercado Pago", value: this.formatMoney(metrics.mercadopago_fees), comparison: comparisons.mercadopago_fees, inverse: true },
             { key: "profitability_operating_result", label: "Resultado operativo", value: this.formatMoney(metrics.profitability_operating_result), comparison: comparisons.profitability_operating_result, featured: true },
         ];
+    }
+
+    formatInstallments(value) {
+        return value === 1 ? "1 cuota" : `${this.formatNumber(value)} cuotas`;
     }
 
     formatPercentage(value) {
@@ -408,6 +414,7 @@ export class ExecutiveDashboard extends Component {
             pos_sales: { name: "Ventas de Point of Sale", res_model: "pos.order", views: [[false, "list"], [false, "form"]] },
             store_sales: { name: "Ventas Web", res_model: "sale.order", views: [[false, "list"], [false, "form"]] },
             other_sales: { name: "Otras ventas facturadas", res_model: "account.move", views: [[false, "list"], [false, "form"]] },
+            mercadopago_payments: { name: "Cobros con Mercado Pago", res_model: "shop.sale.payment", views: [[false, "list"], [false, "form"]] },
         };
         if (!ids.length) {
             this.notification.add("No hay registros relacionados para abrir.", { type: "info" });

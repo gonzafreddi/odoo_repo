@@ -96,6 +96,26 @@
 .payment_panel th:first-child { text-align: left; white-space: normal; }
 .payment_panel thead th { border-top: 0; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; }
 .payment_panel tbody tr.is-pending th, .payment_panel tbody tr.is-pending td { background: #fff9ed; }
+.mp_panel { margin-bottom: 1.6rem; }
+.mp_empty { margin: 0; color: var(--muted); }
+.mp_summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .7rem; margin-bottom: 1.1rem; }
+.mp_summary article { display: flex; min-width: 0; flex-direction: column; padding: .9rem; border: 1px solid var(--line); border-radius: .55rem; background: #eaf3f1; }
+.mp_summary article.is-cost { background: #fff9ed; border-color: #f0dcb8; }
+.mp_summary span { color: var(--teal); font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.mp_summary .is-cost span { color: var(--amber); }
+.mp_summary strong { margin: .35rem 0; font-family: var(--font-data); font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums lining-nums; letter-spacing: -.025em; white-space: nowrap; }
+.mp_summary small { color: var(--muted); }
+.mp_summary em { font-style: normal; }
+.mp_summary em.is-positive { color: #168367; }.mp_summary em.is-negative { color: #c34c43; }
+.mp_tables { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.mp_tables h3 { margin: 0 0 .4rem; color: var(--ink); font-size: .85rem; font-weight: 750; }
+.mp_tables table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.mp_tables th, .mp_tables td { padding: .55rem .45rem; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; font-size: .82rem; }
+.mp_tables th:first-child { text-align: left; }
+.mp_tables thead th { border-top: 0; color: var(--muted); font-size: .66rem; text-transform: uppercase; letter-spacing: .06em; }
+.mp_tables td { font-family: var(--font-data); }
+.mp_tables td small { color: var(--muted); }
+.mp_tables tr.is-top th, .mp_tables tr.is-top td { background: #eaf3f1; font-weight: 700; }
 .daily_sales_view { margin-top: 1.25rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
 .daily_sales_heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--muted); }
 .daily_sales_heading > div { display: flex; align-items: center; gap: .65rem; }
@@ -194,7 +214,7 @@
 .profitability_kpi .kpi_label { min-height: auto; overflow-wrap: anywhere; }
 .profitability_kpi .kpi_value { max-width: 100%; font-size: clamp(1rem, 1.45vw, 1.5rem); line-height: 1.05; white-space: nowrap; }
 .profitability_explanation { margin: 1rem 0 0; padding: .85rem 1rem; border-left: 3px solid var(--teal); background: #eaf3f1; color: var(--muted); font-size: .82rem; line-height: 1.5; }
-.profitability_formula { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: .55rem; margin-top: 1rem; }
+.profitability_formula { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: .55rem; margin-top: 1rem; }
 .profitability_formula span { display: flex; min-width: 0; overflow: hidden; flex-direction: column; justify-content: center; min-height: 5rem; padding: .8rem; border: 1px solid var(--line); border-radius: .55rem; background: var(--card); color: var(--muted); font-size: .75rem; }
 .profitability_formula b { max-width: 100%; margin-bottom: .3rem; color: var(--ink); font-family: var(--font-data); font-size: clamp(.95rem, 1.2vw, 1.15rem); font-weight: 700; font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; line-height: 1.05; letter-spacing: -.025em; white-space: nowrap; }
 .profitability_formula i { align-self: center; color: var(--muted); font-size: 1.3rem; font-style: normal; }
@@ -210,6 +230,6 @@
 
 .payment_panel td, .daily_sales_view td, .category_panel td, .profitability_panel td, .account_list strong, .bar_value, .low_stock_grid b { font-family: var(--font-data); font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
 
-@media (max-width: 1000px) { .dashboard_header { align-items: start; flex-direction: column; }.dashboard_filters { justify-content: start; }.kpi_card { grid-column: span 4; }.kpi_card.is-featured { grid-column: span 8; }.channel_strip { grid-template-columns: repeat(3, 1fr); }.channel_intro { grid-column: 1 / -1; }.low_stock_grid { grid-template-columns: repeat(2, 1fr); } .profitability_kpi { grid-column: span 6; }.profitability_formula { grid-template-columns: repeat(2, minmax(0, 1fr)); }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: span 2; } }
-@media (max-width: 700px) { .o_shop_executive_dashboard { padding: 1rem; }.dashboard_filters { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }.preset_group { grid-column: 1 / -1; }.preset_group button { flex: 1; }.dashboard_filters input { width: 100%; }.kpi_card, .kpi_card.is-featured { grid-column: span 12; min-height: 7.5rem; }.channel_strip { grid-template-columns: 1fr; }.channel_intro { grid-column: auto; }.analysis_grid { grid-template-columns: 1fr; }.low_stock_grid { grid-template-columns: 1fr; }.comparison_note { text-align: left; } .profitability_kpi { grid-column: span 12; }.profitability_formula { grid-template-columns: 1fr; }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: auto; } .product_detail_panel { width: 100%; }.product_detail_kpis { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) { .dashboard_header { align-items: start; flex-direction: column; }.dashboard_filters { justify-content: start; }.kpi_card { grid-column: span 4; }.kpi_card.is-featured { grid-column: span 8; }.channel_strip { grid-template-columns: repeat(3, 1fr); }.channel_intro { grid-column: 1 / -1; }.low_stock_grid { grid-template-columns: repeat(2, 1fr); }.mp_summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }.mp_tables { grid-template-columns: 1fr; } .profitability_kpi { grid-column: span 6; }.profitability_formula { grid-template-columns: repeat(2, minmax(0, 1fr)); }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: span 2; } }
+@media (max-width: 700px) { .o_shop_executive_dashboard { padding: 1rem; }.dashboard_filters { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }.preset_group { grid-column: 1 / -1; }.preset_group button { flex: 1; }.dashboard_filters input { width: 100%; }.kpi_card, .kpi_card.is-featured { grid-column: span 12; min-height: 7.5rem; }.channel_strip { grid-template-columns: 1fr; }.channel_intro { grid-column: auto; }.analysis_grid { grid-template-columns: 1fr; }.low_stock_grid { grid-template-columns: 1fr; }.mp_summary { grid-template-columns: 1fr; }.comparison_note { text-align: left; } .profitability_kpi { grid-column: span 12; }.profitability_formula { grid-template-columns: 1fr; }.profitability_formula i { display: none; }.profitability_formula .result { grid-column: auto; } .product_detail_panel { width: 100%; }.product_detail_kpis { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .dashboard_spinner { animation: none; }.kpi_card { transition: none; } }

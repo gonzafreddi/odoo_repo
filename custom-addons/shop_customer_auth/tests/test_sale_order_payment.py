@@ -136,41 +136,26 @@ class TestSaleOrderPayment(TransactionCase):
         self._register(order2, 100.0, self.transfer, "transf")
         self.assertEqual(len(order1.web_payment_ids | order2.web_payment_ids), 2)
 
-    def _hide_existing_mercadopago_methods(self):
-        # La base puede traer ya un medio "Mercado Pago"; se aparta dentro del test.
-        self.env["shop.sale.payment.method"].with_context(active_test=False).search([
-            ("company_id", "=", self.env.company.id),
-            ("name", "=ilike", "Mercado Pago"),
-        ]).write({"name": "Mercado Pago (previo)"})
-        self.env.flush_all()
-
-    def test_mercadopago_reuses_existing_method_and_reactivates_it(self):
-        self._hide_existing_mercadopago_methods()
-        method = self.env["shop.sale.payment.method"].create({
-            "name": "Mercado Pago", "company_id": self.env.company.id,
-            "active": False,
-        })
+    def test_mercadopago_uses_fixed_method(self):
+        fixed = self.env.ref("shop_customer_auth.payment_method_mercadopago")
         order = self._order()
         result = self.env["sale.order"].shop_register_online_payment(
-            order.id, "mercadopago", "existing-method", 100.0,
+            order.id, "mercadopago", "fixed-method", 100.0,
             order.currency_id.name,
         )
         self.assertEqual(result["status"], "created")
-        self.assertEqual(order.web_payment_ids.payment_method_id, method)
-        self.assertTrue(method.active)
+        self.assertEqual(order.web_payment_ids.payment_method_id, fixed)
+        self.assertTrue(fixed.reference_required)
 
-    def test_mercadopago_creates_method_when_missing(self):
-        self._hide_existing_mercadopago_methods()
-        order = self._order()
-        result = self.env["sale.order"].shop_register_online_payment(
-            order.id, "mercadopago", "new-method", 100.0,
-            order.currency_id.name,
-        )
-        self.assertEqual(result["status"], "created")
-        method = order.web_payment_ids.payment_method_id
-        self.assertEqual(method.name, "Mercado Pago")
-        self.assertTrue(method.reference_required)
-        self.assertEqual(method.sequence, 50)
+    def test_fixed_mercadopago_method_cannot_be_renamed_archived_or_deleted(self):
+        fixed = self.env.ref("shop_customer_auth.payment_method_mercadopago")
+        for values in ({"name": "Otro"}, {"active": False}):
+            with self.assertRaises(UserError):
+                fixed.write(values)
+        with self.assertRaises(UserError):
+            fixed.unlink()
+        fixed.write({"sequence": 5})
+        self.assertEqual(fixed.sequence, 5)
 
     def test_mercadopago_rpc_rejects_amount_and_currency_mismatches(self):
         order = self._order()

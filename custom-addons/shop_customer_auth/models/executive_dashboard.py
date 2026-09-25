@@ -326,6 +326,90 @@ class ShopExecutiveDashboard(models.AbstractModel):
         return result
 
     @api.model
+    def _mercadopago_data(self, start, end):
+        """Cobros recibidos por Mercado Pago: comisiones, tipos de pago y cuotas."""
+        company = self.env.company
+        payments = self.env["shop.sale.payment"].sudo().search([
+            ("company_id", "=", company.id),
+            ("state", "=", "confirmed"),
+            ("provider_payment_ref", "=like", "mercadopago:%"),
+            ("date", ">=", start),
+            ("date", "<=", end),
+        ])
+
+        def convert(payment, value):
+            return payment.currency_id._convert(
+                value or 0.0, company.currency_id, company, payment.date
+            )
+
+        totals = {"count": 0, "amount": 0.0, "fees": 0.0, "net": 0.0}
+        by_type = {}
+        by_method = {}
+        by_installments = {}
+        for payment in payments:
+            amount = convert(payment, payment.amount)
+            fees = convert(payment, payment.mp_fee_amount)
+            totals["count"] += 1
+            totals["amount"] += amount
+            totals["fees"] += fees
+            totals["net"] += amount - fees
+            groups = (
+                (by_type, payment.mp_payment_type or _("Sin detalle")),
+                (by_method, payment.mp_payment_method or _("Sin detalle")),
+            )
+            if payment.mp_installments:
+                groups += ((by_installments, payment.mp_installments),)
+            for bucket, key in groups:
+                row = bucket.setdefault(key, {"count": 0, "amount": 0.0, "fees": 0.0})
+                row["count"] += 1
+                row["amount"] += amount
+                row["fees"] += fees
+
+        def rows(bucket, label_key="name"):
+            result = [
+                {
+                    label_key: key,
+                    "count": values["count"],
+                    "amount": values["amount"],
+                    "fees": values["fees"],
+                    "fee_percent": (
+                        values["fees"] / values["amount"] * 100
+                        if values["amount"] else 0.0
+                    ),
+                    "share": (
+                        values["amount"] / totals["amount"] * 100
+                        if totals["amount"] else 0.0
+                    ),
+                }
+                for key, values in bucket.items()
+            ]
+            result.sort(key=lambda item: item["amount"], reverse=True)
+            return result
+
+        installments = rows(by_installments, "installments")
+        installments.sort(key=lambda item: item["installments"])
+        installment_count = sum(item["count"] for item in installments)
+        most_used = max(
+            installments, key=lambda item: (item["count"], -item["installments"]),
+            default=None,
+        )
+        return {
+            **totals,
+            "fee_percent": (
+                totals["fees"] / totals["amount"] * 100 if totals["amount"] else 0.0
+            ),
+            "average_installments": (
+                sum(item["installments"] * item["count"] for item in installments)
+                / installment_count if installment_count else 0.0
+            ),
+            "most_used_installments": most_used["installments"] if most_used else 0,
+            "by_type": rows(by_type),
+            "by_method": rows(by_method),
+            "by_installments": installments,
+            "payment_ids": payments.ids,
+        }
+
+    @api.model
     def _purchase_data(self, start, end):
         company = self.env.company
         orders = self.env["purchase.order"].sudo().search([
@@ -430,6 +514,8 @@ class ShopExecutiveDashboard(models.AbstractModel):
         previous_expenses = self._expense_data(previous_start, previous_end)
         stock = self._stock_data()
         payment_methods = self._payment_method_data(sales)
+        mercadopago = self._mercadopago_data(start, end)
+        previous_mercadopago = self._mercadopago_data(previous_start, previous_end)
 
         category_keys = (
             set(sales["by_category"])
@@ -478,11 +564,19 @@ class ShopExecutiveDashboard(models.AbstractModel):
 
         gross_margin = sales["total"] - sales["cost"]
         previous_gross_margin = previous_sales["total"] - previous_sales["cost"]
-        profitability_operating_result = gross_margin - expenses["total"]
-        previous_profitability_result = previous_gross_margin - previous_expenses["total"]
-        operating_result = sales["total"] - purchases["total"] - expenses["total"]
+        # Las comisiones de Mercado Pago se restan como costo de cobro.
+        mp_fees = mercadopago["fees"]
+        previous_mp_fees = previous_mercadopago["fees"]
+        profitability_operating_result = gross_margin - expenses["total"] - mp_fees
+        previous_profitability_result = (
+            previous_gross_margin - previous_expenses["total"] - previous_mp_fees
+        )
+        operating_result = (
+            sales["total"] - purchases["total"] - expenses["total"] - mp_fees
+        )
         previous_result = (
-            previous_sales["total"] - previous_purchases["total"] - previous_expenses["total"]
+            previous_sales["total"] - previous_purchases["total"]
+            - previous_expenses["total"] - previous_mp_fees
         )
         ticket = sales["total"] / sales["document_count"] if sales["document_count"] else 0.0
         previous_ticket = (
@@ -496,6 +590,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
             "gross_margin_percent": gross_margin / sales["total"] * 100 if sales["total"] else 0.0,
             "profitability_operating_result": profitability_operating_result,
             "expenses": expenses["total"],
+            "mercadopago_fees": mp_fees,
             "purchases": purchases["total"],
             "stock_value": stock["total"],
             "operating_result": operating_result,
@@ -512,6 +607,10 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 profitability_operating_result, previous_profitability_result
             ),
             "expenses": self._comparison(expenses["total"], previous_expenses["total"]),
+            "mercadopago_fees": self._comparison(mp_fees, previous_mp_fees),
+            "mercadopago_amount": self._comparison(
+                mercadopago["amount"], previous_mercadopago["amount"]
+            ),
             "purchases": self._comparison(purchases["total"], previous_purchases["total"]),
             "operating_result": self._comparison(operating_result, previous_result),
             "average_ticket": self._comparison(ticket, previous_ticket),
@@ -571,6 +670,10 @@ class ShopExecutiveDashboard(models.AbstractModel):
             "comparisons": comparisons,
             "sales_channels": sales_channels,
             "payment_methods": payment_methods,
+            "mercadopago": {
+                key: value for key, value in mercadopago.items()
+                if key != "payment_ids"
+            },
             "categories": categories,
             "expense_accounts": expense_accounts,
             "top_products_by_amount": top_products_by_amount,
@@ -586,6 +689,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 "purchases": purchases["order_ids"],
                 "stock": stock["product_ids"],
                 "low_stock": [item["id"] for item in stock["low_stock"]],
+                "mercadopago_payments": mercadopago["payment_ids"],
             },
         }
 
@@ -700,10 +804,14 @@ class ShopExecutiveDashboard(models.AbstractModel):
                     payment_amounts.get(method_name, 0.0) + payment.amount
                 )
             payment_method_names.update(payment_amounts)
+            total = sum(payment_amounts.values())
+            mercadopago_fees = sum(day_payments.mapped("mp_fee_amount"))
             rows.append({
                 "date": fields.Date.to_string(day),
                 "payment_amounts": payment_amounts,
-                "total": sum(payment_amounts.values()),
+                "total": total,
+                "mercadopago_fees": mercadopago_fees,
+                "net": total - mercadopago_fees,
             })
         return {
             "rows": rows,
