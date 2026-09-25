@@ -1,15 +1,15 @@
 from odoo import api, fields, models
 
-CASH_DISCOUNT_PARAM = "shop_config.cash_discount_percent"
+CARD_SURCHARGE_PARAM = "shop_config.card_surcharge_percent"
 
 
-def get_cash_discount_percent(env):
-    """% de descuento para efectivo/transferencia configurado en la tienda."""
+def get_card_surcharge_percent(env):
+    """% de recargo para tarjeta/Mercado Pago configurado en la tienda."""
     try:
-        value = float(env["ir.config_parameter"].sudo().get_param(CASH_DISCOUNT_PARAM) or 0.0)
+        value = float(env["ir.config_parameter"].sudo().get_param(CARD_SURCHARGE_PARAM) or 0.0)
     except ValueError:
         return 0.0
-    return min(max(value, 0.0), 99.99)
+    return min(max(value, 0.0), 100.0)
 
 
 class ProductTemplate(models.Model):
@@ -69,28 +69,28 @@ class ProductTemplate(models.Model):
         help="Precio promocional que se aplica cuando la oferta está activa.",
     )
 
-    card_price = fields.Monetary(
-        string="Precio tarjeta",
-        compute="_compute_payment_prices",
-        currency_field="currency_id",
-        help="Precio de lista, o el de oferta cuando está activa y es menor.",
-    )
     cash_price = fields.Monetary(
         string="Precio efectivo / transferencia",
         compute="_compute_payment_prices",
         currency_field="currency_id",
-        help="Precio tarjeta menos el descuento de efectivo configurado en la tienda.",
+        help="Precio de lista, o el de oferta cuando está activa y es menor.",
+    )
+    card_price = fields.Monetary(
+        string="Precio tarjeta",
+        compute="_compute_payment_prices",
+        currency_field="currency_id",
+        help="Precio efectivo más el recargo de tarjeta configurado en la tienda.",
     )
 
     @api.depends("list_price", "offer_active", "offer_price")
     def _compute_payment_prices(self):
-        discount = get_cash_discount_percent(self.env)
+        surcharge = get_card_surcharge_percent(self.env)
         for product in self:
-            card_price = product.list_price
+            cash_price = product.list_price
             if product.offer_active and product.offer_price > 0:
-                card_price = min(card_price, product.offer_price)
-            product.card_price = card_price
-            product.cash_price = card_price * (1 - discount / 100)
+                cash_price = min(cash_price, product.offer_price)
+            product.cash_price = cash_price
+            product.card_price = cash_price * (1 + surcharge / 100)
 
     @api.model
     def _load_pos_data_fields(self, config_id):

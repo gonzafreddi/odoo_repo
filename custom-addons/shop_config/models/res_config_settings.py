@@ -23,18 +23,19 @@ class ResConfigSettings(models.TransientModel):
         default=3500.0,
         help="Costo de envío que muestra la tienda online cuando el subtotal no alcanza el umbral.",
     )
-    x_cash_discount_percent = fields.Float(
-        string="Descuento efectivo / transferencia (%)",
-        config_parameter="shop_config.cash_discount_percent",
+    x_card_surcharge_percent = fields.Float(
+        string="Recargo tarjeta / Mercado Pago (%)",
+        config_parameter="shop_config.card_surcharge_percent",
         default=0.0,
-        help="Descuento sobre el precio con tarjeta (o de oferta) para pagos en "
-             "efectivo o transferencia. Se aplica en la tienda online y en el POS.",
+        help="Recargo sobre el precio de lista (o de oferta) para pagos con tarjeta "
+             "o Mercado Pago. Efectivo y transferencia pagan el precio de lista. "
+             "Se aplica en la tienda online y en el POS.",
     )
 
-    @api.constrains("x_cash_discount_percent")
-    def _check_cash_discount_percent(self):
+    @api.constrains("x_card_surcharge_percent")
+    def _check_card_surcharge_percent(self):
         for settings in self:
-            if not 0 <= settings.x_cash_discount_percent < 100:
+            if not 0 <= settings.x_card_surcharge_percent <= 100:
                 raise ValidationError(
-                    _("El descuento de efectivo debe estar entre 0 y 99,99 %.")
+                    _("El recargo de tarjeta debe estar entre 0 y 100 %.")
                 )

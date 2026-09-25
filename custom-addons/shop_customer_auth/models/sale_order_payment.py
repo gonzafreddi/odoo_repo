@@ -209,7 +209,7 @@ class SaleOrder(models.Model):
         ],
         string="Medio elegido en la web", readonly=True, copy=False,
         help="Medio de pago que eligió el cliente al confirmar en la tienda online. "
-             "Efectivo y transferencia llevan el descuento en cada línea.",
+             "Tarjeta y Mercado Pago llevan el recargo en el precio de cada línea.",
     )
     web_amount_paid = fields.Monetary(
         string="Cobrado", compute="_compute_web_payment_totals",

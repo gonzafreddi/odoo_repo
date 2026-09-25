@@ -30,8 +30,8 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
             'shop_customer_auth/static/src/pos/customer_account.js',
             'shop_customer_auth/static/src/pos/customer_account.xml',
             'shop_customer_auth/static/src/pos/customer_account.scss',
-            'shop_customer_auth/static/src/pos/cash_discount.js',
-            'shop_customer_auth/static/src/pos/cash_discount.xml',
+            'shop_customer_auth/static/src/pos/card_surcharge.js',
+            'shop_customer_auth/static/src/pos/card_surcharge.xml',
         ],
         'web.assets_backend': [
             'shop_customer_auth/static/src/dashboard/executive_dashboard.js',

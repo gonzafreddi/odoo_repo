@@ -20,12 +20,12 @@
                         </div>
                     </div>
                 </setting>
-                <setting id="suplex_cash_discount" string="Descuento efectivo / transferencia"
-                         help="Precio con tarjeta = precio de lista (u oferta). Efectivo y transferencia pagan este % menos, en la web y en el POS.">
+                <setting id="suplex_card_surcharge" string="Recargo tarjeta / Mercado Pago"
+                         help="Efectivo y transferencia = precio de lista (u oferta). Tarjeta y Mercado Pago pagan este % más, en la web y en el POS.">
                     <div class="content-group">
                         <div class="row">
-                            <label for="x_cash_discount_percent" class="col-lg-4 o_light_label"/>
-                            <field name="x_cash_discount_percent"/>
+                            <label for="x_card_surcharge_percent" class="col-lg-4 o_light_label"/>
+                            <field name="x_card_surcharge_percent"/>
                         </div>
                     </div>
                 </setting>

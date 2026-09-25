@@ -16,9 +16,9 @@
                 <field name="combo_cost" widget="monetary" invisible="type != 'combo'"
                     options="{'currency_field': 'cost_currency_id'}"/>
                 <field name="margin_percentage" widget="percentage"/>
-                <field name="card_price" widget="monetary"
-                    options="{'currency_field': 'currency_id'}"/>
                 <field name="cash_price" widget="monetary"
+                    options="{'currency_field': 'currency_id'}"/>
+                <field name="card_price" widget="monetary"
                     options="{'currency_field': 'currency_id'}"/>
             </xpath>
         </field>
@@ -39,9 +39,9 @@
                 <field name="combo_cost" widget="monetary" optional="show"
                     options="{'currency_field': 'cost_currency_id'}" invisible="type != 'combo'"/>
                 <field name="margin_percentage" widget="percentage"/>
-                <field name="card_price" widget="monetary"
-                    options="{'currency_field': 'currency_id'}" optional="show"/>
                 <field name="cash_price" widget="monetary"
+                    options="{'currency_field': 'currency_id'}" optional="show"/>
+                <field name="card_price" widget="monetary"
                     options="{'currency_field': 'currency_id'}" optional="show"/>
             </field>
         </field>
