@@ -13,5 +13,13 @@
             <field name="key">shop_config.free_shipping_enabled</field>
             <field name="value">1</field>
         </record>
+        <record id="param_mercadopago_paused" model="ir.config_parameter">
+            <field name="key">shop_config.mercadopago_paused</field>
+            <field name="value">0</field>
+        </record>
+        <record id="param_card_surcharge_percent" model="ir.config_parameter">
+            <field name="key">shop_config.card_surcharge_percent</field>
+            <field name="value">0</field>
+        </record>
     </data>
 </odoo>
