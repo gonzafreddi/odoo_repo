@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.shop.objectives</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='sale_shipping_setting_container']/setting[@id='delivery']" position="after">
+                <setting id="shop_objectives_enabled" string="Objetivos (tienda online)"
+                         help="Muestra u oculta la sección 'Elegí según tu objetivo' en la tienda online.">
+                    <field name="x_objectives_enabled"/>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>
