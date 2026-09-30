@@ -13,6 +13,7 @@
         "views/shop_product_objective_views.xml",
         "views/product_template_views.xml",
         "views/shop_product_objective_menu.xml",
+        "views/res_config_settings_views.xml",
     ],
     "assets": {
         "web.assets_backend": [

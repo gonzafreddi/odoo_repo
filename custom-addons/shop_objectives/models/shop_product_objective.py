@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ShopProductObjective(models.Model):
@@ -36,8 +36,15 @@ class ShopProductObjective(models.Model):
             return False
         return str(int(self.write_date.timestamp()))
 
+    @api.model
+    def _objectives_enabled(self):
+        value = self.env["ir.config_parameter"].sudo().get_param("shop_objectives.enabled")
+        return value not in ("0", "False")
+
     def list_active(self):
         """RPC: objetivos activos, ordenados. Llamar con ids=[] vía execute_kw."""
+        if not self._objectives_enabled():
+            return []
         objectives = self.search([], order="sequence")
         return [
             {
@@ -53,6 +60,8 @@ class ShopProductObjective(models.Model):
 
     def get_by_slug(self, slug):
         """RPC: detalle y líneas activas de un objetivo por slug."""
+        if not self._objectives_enabled():
+            return False
         objective = self.search([("slug", "=", slug)], limit=1)
         if not objective:
             return False

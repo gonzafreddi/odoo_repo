@@ -193,3 +193,17 @@ class TestShopObjectives(TransactionCase):
             self.Objective.with_user(portal_user).list_active()
         with self.assertRaises(AccessError):
             self.Objective.with_user(portal_user).get_by_slug("ganar-masa")
+
+    def test_objectives_section_can_be_disabled(self):
+        params = self.env["ir.config_parameter"].sudo()
+        self.assertTrue(self.Objective.list_active())
+        settings = self.env["res.config.settings"].create({"x_objectives_enabled": False})
+        settings.set_values()
+        self.assertEqual(params.get_param("shop_objectives.enabled"), "0")
+        self.assertEqual(self.Objective.list_active(), [])
+        self.assertFalse(self.Objective.get_by_slug("ganar-masa"))
+        self.assertFalse(self.env["res.config.settings"].create({}).x_objectives_enabled)
+        settings = self.env["res.config.settings"].create({"x_objectives_enabled": True})
+        settings.set_values()
+        self.assertTrue(self.Objective.list_active())
+        self.assertTrue(self.Objective.get_by_slug("ganar-masa"))
