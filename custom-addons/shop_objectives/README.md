@@ -13,7 +13,9 @@ Dos métodos RPC en `shop.product.objective`, llamables por `execute_kw` como cu
 (primer argumento de `args` = lista de ids vacía). Requieren un usuario autenticado con acceso de lectura
 al modelo (grupo `base.group_user`, ya otorgado en `security/ir.model.access.csv`); un usuario sin ese
 acceso recibe `AccessError`. No se expone el campo `image` — Nest arma la URL pública
-(`/web/image/shop.product.objective/<id>/image`) solo con el `id`, igual que ya hace con productos.
+(`/shop_objectives/image/<id>`) solo con el `id`. Esa ruta (`controllers/main.py`) es `auth="public"`
+y sirve únicamente la imagen de objetivos activos, redimensionada a 1024 px como máximo: `/web/image`
+no sirve porque visitantes públicos/portal no tienen lectura sobre el modelo y reciben el placeholder.
 
 Ejemplo real, capturado contra `suplex_test` (2026-09-14):
 

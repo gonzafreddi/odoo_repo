@@ -4,8 +4,9 @@
         <field name="name">shop.product.objective.list</field>
         <field name="model">shop.product.objective</field>
         <field name="arch" type="xml">
-            <list string="Objetivos" default_order="sequence" editable="top">
+            <list string="Objetivos" default_order="sequence">
                 <field name="sequence" widget="handle"/>
+                <field name="image" widget="image" string="Foto" options="{'size': [0, 48]}"/>
                 <field name="name"/>
                 <field name="slug"/>
                 <field name="active"/>
@@ -21,7 +22,15 @@
             <form string="Objetivo">
                 <sheet>
                     <group>
-                        <field name="image" widget="image" class="oe_avatar"/>
+                        <group string="Foto de la card">
+                            <field name="image" widget="image" nolabel="1" colspan="2"
+                                   class="o_shop_objective_image"
+                                   options="{'size': [240, 320]}"/>
+                            <div class="text-muted small" colspan="2">
+                                Usá el lápiz para subir o cambiar la foto. Recomendado:
+                                vertical, 1200×1600 px, JPG.
+                            </div>
+                        </group>
                         <group>
                             <field name="name"/>
                             <field name="slug"/>

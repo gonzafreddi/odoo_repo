@@ -14,6 +14,11 @@
         "views/product_template_views.xml",
         "views/shop_product_objective_menu.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "shop_objectives/static/src/scss/shop_objective_form.scss",
+        ],
+    },
     "installable": True,
     "application": False,
     "license": "LGPL-3",

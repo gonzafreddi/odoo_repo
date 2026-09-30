@@ -11,7 +11,12 @@ class ShopProductObjective(models.Model):
     slug = fields.Char(required=True, index=True)
     short_description = fields.Char()
     description = fields.Html()
-    image = fields.Image(max_width=1920, max_height=1920)
+    image = fields.Image(
+        max_width=1920,
+        max_height=1920,
+        help="Foto de la card en el home y de la página del objetivo. "
+        "Usá una foto vertical (recomendado 1200×1600 px, JPG).",
+    )
     sequence = fields.Integer(default=10)
     active = fields.Boolean(default=True)
     line_ids = fields.One2many(
@@ -24,6 +29,13 @@ class ShopProductObjective(models.Model):
         for objective in self:
             objective.line_count = len(objective.line_ids)
 
+    def _image_version(self):
+        """Versión de la imagen para que Nest arme una URL que cambie al editarla."""
+        self.ensure_one()
+        if not self.image:
+            return False
+        return str(int(self.write_date.timestamp()))
+
     def list_active(self):
         """RPC: objetivos activos, ordenados. Llamar con ids=[] vía execute_kw."""
         objectives = self.search([], order="sequence")
@@ -34,6 +46,7 @@ class ShopProductObjective(models.Model):
                 "slug": objective.slug,
                 "short_description": objective.short_description or "",
                 "sequence": objective.sequence,
+                "image_version": objective._image_version(),
             }
             for objective in objectives
         ]
@@ -51,6 +64,7 @@ class ShopProductObjective(models.Model):
             "short_description": objective.short_description or "",
             "description": objective.description or "",
             "sequence": objective.sequence,
+            "image_version": objective._image_version(),
             "lines": [
                 {
                     "product_tmpl_id": line.product_tmpl_id.id,
