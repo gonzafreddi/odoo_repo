@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="0">
+    <data noupdate="1">
         <record id="param_free_shipping_threshold" model="ir.config_parameter">
             <field name="key">shop_config.free_shipping_threshold</field>
             <field name="value">130000</field>
