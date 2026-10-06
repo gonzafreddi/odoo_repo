@@ -199,6 +199,31 @@ class ShopSalePayment(models.Model):
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
+    _web_checkout_key_unique = models.Constraint(
+        "UNIQUE(x_web_checkout_key)",
+        "La clave de checkout web ya está asignada a otro pedido.",
+    )
+
+    x_web_checkout_key = fields.Char(
+        string="Clave de checkout web", copy=False, readonly=True, index=True,
+    )
+    x_web_guest = fields.Boolean(
+        string="Compra como invitado", copy=False, readonly=True, index=True,
+    )
+    x_web_customer_name = fields.Char(
+        string="Nombre del comprador", copy=False, readonly=True,
+    )
+    x_web_customer_email = fields.Char(
+        string="Email del comprador", copy=False, readonly=True, index=True,
+    )
+    x_web_customer_phone = fields.Char(
+        string="Teléfono del comprador", copy=False, readonly=True,
+    )
+    x_shop_auth_id = fields.Many2one(
+        "shop.customer.auth", string="Cuenta web", copy=False, index=True,
+        ondelete="set null", readonly=True,
+    )
+
     web_payment_ids = fields.One2many(
         "shop.sale.payment", "order_id", string="Cobros web",
     )
@@ -228,6 +253,22 @@ class SaleOrder(models.Model):
         string="Estado de cobro", compute="_compute_web_payment_totals",
         store=True,
     )
+
+    @api.model
+    def shop_claim_guest_orders(self, auth_id):
+        auth = self.env["shop.customer.auth"].browse(auth_id).exists()
+        if not auth or not auth.active or not auth.email_verified:
+            return {"status": "not_verified", "claimed": 0, "order_ids": []}
+
+        email = auth._normalize_email(auth.email)
+        orders = self.search([
+            ("x_web_guest", "=", True),
+            ("x_shop_auth_id", "=", False),
+            ("x_web_customer_email", "=", email),
+        ])
+        if orders:
+            orders.write({"x_shop_auth_id": auth.id})
+        return {"status": "ok", "claimed": len(orders), "order_ids": orders.ids}
 
     @api.model
     def shop_register_online_payment(

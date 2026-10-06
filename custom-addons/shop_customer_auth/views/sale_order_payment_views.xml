@@ -143,6 +143,7 @@
         <field name="arch" type="xml">
             <field name="amount_total" position="after">
                 <field name="web_payment_preference" optional="hide"/>
+                <field name="x_web_guest" optional="hide"/>
                 <field name="web_payment_state"
                     string="Estado de cobro"
                     widget="badge"
@@ -197,6 +198,16 @@
                     class="float-end"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
+                <page string="Tienda online" name="web_checkout">
+                    <group>
+                        <field name="x_web_checkout_key" readonly="1"/>
+                        <field name="x_web_guest" readonly="1"/>
+                        <field name="x_web_customer_name" readonly="1"/>
+                        <field name="x_web_customer_email" readonly="1"/>
+                        <field name="x_web_customer_phone" readonly="1"/>
+                        <field name="x_shop_auth_id" readonly="1"/>
+                    </group>
+                </page>
                 <page string="Cobros web" name="web_payments">
                     <group>
                         <field name="web_payment_preference" invisible="not web_payment_preference"/>
