@@ -40,6 +40,9 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
             'shop_customer_auth/static/src/stock/quick_stock_adjustment.js',
             'shop_customer_auth/static/src/stock/quick_stock_adjustment.xml',
             'shop_customer_auth/static/src/stock/quick_stock_adjustment.scss',
+            'shop_customer_auth/static/src/margins/product_margins.js',
+            'shop_customer_auth/static/src/margins/product_margins.xml',
+            'shop_customer_auth/static/src/margins/product_margins.scss',
         ],
     },
     'data': [
@@ -55,6 +58,7 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
         'views/pos_payment_method_customer_account_views.xml',
         'views/customer_account_menu.xml',
         'views/executive_dashboard_views.xml',
+        'views/product_margins_views.xml',
         'views/quick_stock_adjustment_views.xml',
         'views/product_template_views.xml',
         'views/product_category_views.xml',

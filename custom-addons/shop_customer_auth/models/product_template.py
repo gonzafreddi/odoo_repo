@@ -56,12 +56,16 @@ class ProductTemplate(models.Model):
     @api.depends_context("company")
     def _compute_margin_percentage(self):
         for product in self:
-            cost = product.combo_cost if product.type == "combo" else product.standard_price
+            cost = product._shop_margin_cost()
             product.margin_percentage = (
                 (product.list_price - cost) / product.list_price
                 if product.list_price
                 else 0.0
             )
+
+    def _shop_margin_cost(self):
+        self.ensure_one()
+        return self.combo_cost if self.type == "combo" else self.standard_price
 
     offer_price = fields.Monetary(
         string="Precio de oferta",

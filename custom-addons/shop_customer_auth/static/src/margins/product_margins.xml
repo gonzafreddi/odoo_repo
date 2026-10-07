@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="shop_customer_auth.ProductMargins">
+        <main class="o_shop_product_margins" aria-labelledby="margins-title">
+            <header class="margins_header">
+                <div>
+                    <p class="margins_eyebrow">VENTAS · <t t-esc="state.data?.company_name || 'Compañía'"/></p>
+                    <h1 id="margins-title">Márgenes de productos</h1>
+                    <p class="margins_intro">Costo, precio y rentabilidad de cada producto.</p>
+                </div>
+                <button class="margins_refresh" t-on-click="load" t-att-disabled="state.loading">↻ <span>Actualizar</span></button>
+            </header>
+            <div t-if="state.loading" class="margins_status" role="status" aria-live="polite"><span class="margins_spinner"/> Cargando márgenes…</div>
+            <div t-elif="state.error" class="margins_error" role="alert"><strong>No se pudieron cargar los márgenes.</strong><span t-esc="state.error"/><button t-on-click="load">Reintentar</button></div>
+            <t t-elif="state.data">
+                <section class="margins_kpis" aria-label="Indicadores de productos">
+                    <article class="margins_kpi"><span>Productos</span><strong t-esc="state.data.summary.count"/></article>
+                    <article class="margins_kpi"><span>Margen promedio</span><strong t-esc="state.data.summary.avg_margin === null ? '—' : formatPercent(state.data.summary.avg_margin)"/></article>
+                    <button class="margins_kpi is-alert" t-att-class="state.alert === 'negative' ? 'margins_kpi is-alert active' : 'margins_kpi is-alert'" t-on-click="() => this.toggleAlert('negative')" aria-pressed="state.alert === 'negative'"><span>Con margen negativo</span><strong t-esc="state.data.summary.negative_count"/><small>Filtrar productos</small></button>
+                    <button class="margins_kpi is-alert" t-att-class="state.alert === 'no_cost' ? 'margins_kpi is-alert active' : 'margins_kpi is-alert'" t-on-click="() => this.toggleAlert('no_cost')" aria-pressed="state.alert === 'no_cost'"><span>Sin costo cargado</span><strong t-esc="state.data.summary.no_cost_count"/><small>Filtrar productos</small></button>
+                </section>
+                <section class="margins_toolbar" aria-label="Filtros de productos">
+                    <label class="margins_search"><span>Buscar</span><input type="search" placeholder="Producto o código…" t-on-input="onSearch"/></label>
+                    <label class="margins_category"><span>Categoría</span><select t-model="state.category"><option value="">Todas</option><option t-foreach="categories" t-as="category" t-key="category" t-att-value="category" t-esc="category"/></select></label>
+                    <div class="margins_segment" role="group" aria-label="Tipo de producto">
+                        <button t-att-class="state.kind === 'all' ? 'active' : ''" t-on-click="() => state.kind = 'all'">Todos</button>
+                        <button t-att-class="state.kind === 'products' ? 'active' : ''" t-on-click="() => state.kind = 'products'">Productos</button>
+                        <button t-att-class="state.kind === 'combos' ? 'active' : ''" t-on-click="() => state.kind = 'combos'">Combos</button>
+                    </div>
+                </section>
+                <section class="margins_table_card">
+                    <div class="margins_table_scroll">
+                        <table>
+                            <thead><tr>
+                                <th t-att-aria-sort="ariaSort('name')"><button t-on-click="() => this.sortBy('name')">Producto <span t-esc="indicator('name')"/></button></th>
+                                <th class="numeric" t-att-aria-sort="ariaSort('cost')"><button t-on-click="() => this.sortBy('cost')">Costo <span t-esc="indicator('cost')"/></button></th>
+                                <th class="numeric" t-att-aria-sort="ariaSort('price')"><button t-on-click="() => this.sortBy('price')">Precio de venta <span t-esc="indicator('price')"/></button></th>
+                                <th class="numeric" t-att-aria-sort="ariaSort('profit')"><button t-on-click="() => this.sortBy('profit')">Ganancia $ <span t-esc="indicator('profit')"/></button></th>
+                                <th class="numeric" t-att-aria-sort="ariaSort('margin')"><button t-on-click="() => this.sortBy('margin')">Margen % <span t-esc="indicator('margin')"/></button></th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="rows" t-as="row" t-key="row.id" t-on-click="() => this.openProduct(row.id)" tabindex="0" t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; this.openProduct(row.id)">
+                                    <td class="product_cell"><img t-att-src="row.image_url" t-att-alt="''"/><div class="product_identity"><strong t-esc="row.name"/><small><t t-if="row.default_code" t-esc="row.default_code"/><t t-if="row.default_code and row.category"> · </t><t t-esc="row.category"/></small><span class="product_badges"><b t-if="row.is_combo">Combo</b><b t-if="row.offer_active">Oferta</b></span></div></td>
+                                    <td class="numeric"><span t-if="row.has_cost" t-esc="formatMoney(row.cost)"/><span t-else="" class="no_cost">Sin costo</span></td>
+                                    <td class="numeric"><strong t-esc="formatMoney(row.price)"/><small t-if="row.offer_active and row.price !== row.list_price" class="old_price" t-esc="formatMoney(row.list_price)"/></td>
+                                    <td t-att-class="'numeric profit ' + (row.profit &lt; 0 ? 'negative' : 'positive')" t-esc="formatMoney(row.profit)"/>
+                                    <td class="numeric margin_cell"><t t-if="row.has_cost and row.margin !== null"><strong t-esc="formatPercent(row.margin)"/><span class="margin_track"><i t-att-class="marginClass(row.margin)" t-att-style="'width:' + marginWidth(row.margin)"/></span></t><span t-else="">—</span></td>
+                                </tr>
+                                <tr t-if="!rows.length"><td colspan="5" class="margins_empty">No hay productos que coincidan con estos filtros.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <footer class="margins_footer">Mostrando <strong t-esc="rows.length"/> de <t t-esc="state.data.rows.length"/></footer>
+                </section>
+            </t>
+        </main>
+    </t>
+</templates>
