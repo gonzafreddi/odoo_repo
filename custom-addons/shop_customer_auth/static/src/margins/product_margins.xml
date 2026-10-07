@@ -16,8 +16,8 @@
                 <section class="margins_kpis" aria-label="Indicadores de productos">
                     <article class="margins_kpi"><span>Productos</span><strong t-esc="state.data.summary.count"/></article>
                     <article class="margins_kpi"><span>Margen promedio</span><strong t-esc="state.data.summary.avg_margin === null ? '—' : formatPercent(state.data.summary.avg_margin)"/></article>
-                    <button class="margins_kpi is-alert" t-att-class="state.alert === 'negative' ? 'margins_kpi is-alert active' : 'margins_kpi is-alert'" t-on-click="() => this.toggleAlert('negative')" aria-pressed="state.alert === 'negative'"><span>Con margen negativo</span><strong t-esc="state.data.summary.negative_count"/><small>Filtrar productos</small></button>
-                    <button class="margins_kpi is-alert" t-att-class="state.alert === 'no_cost' ? 'margins_kpi is-alert active' : 'margins_kpi is-alert'" t-on-click="() => this.toggleAlert('no_cost')" aria-pressed="state.alert === 'no_cost'"><span>Sin costo cargado</span><strong t-esc="state.data.summary.no_cost_count"/><small>Filtrar productos</small></button>
+                    <button class="margins_kpi is-alert" t-att-class="{ active: state.alert === 'negative' }" t-on-click="() => this.toggleAlert('negative')" t-att-aria-pressed="state.alert === 'negative'"><span>Con margen negativo</span><strong t-esc="state.data.summary.negative_count"/><small>Filtrar productos</small></button>
+                    <button class="margins_kpi is-alert" t-att-class="{ active: state.alert === 'no_cost' }" t-on-click="() => this.toggleAlert('no_cost')" t-att-aria-pressed="state.alert === 'no_cost'"><span>Sin costo cargado</span><strong t-esc="state.data.summary.no_cost_count"/><small>Filtrar productos</small></button>
                 </section>
                 <section class="margins_toolbar" aria-label="Filtros de productos">
                     <label class="margins_search"><span>Buscar</span><input type="search" placeholder="Producto o código…" t-on-input="onSearch"/></label>
@@ -40,10 +40,10 @@
                             </tr></thead>
                             <tbody>
                                 <tr t-foreach="rows" t-as="row" t-key="row.id" t-on-click="() => this.openProduct(row.id)" tabindex="0" t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; this.openProduct(row.id)">
-                                    <td class="product_cell"><img t-att-src="row.image_url" t-att-alt="''"/><div class="product_identity"><strong t-esc="row.name"/><small><t t-if="row.default_code" t-esc="row.default_code"/><t t-if="row.default_code and row.category"> · </t><t t-esc="row.category"/></small><span class="product_badges"><b t-if="row.is_combo">Combo</b><b t-if="row.offer_active">Oferta</b></span></div></td>
+                                    <td class="product_cell"><img t-att-src="row.image_url" t-att-alt="''"/><div class="product_identity"><strong t-esc="row.name"/><small><t t-if="row.default_code" t-esc="row.default_code"/><t t-if="row.default_code and row.category"> · </t><t t-esc="row.category"/></small><span class="product_badges"><b t-if="row.is_combo">Combo</b><b t-if="row.offer_active">Oferta</b><b t-if="!row.is_combo and row.variant_count &gt; 1" class="variant_badge" title="Costo promedio de las variantes"><t t-esc="row.variant_count"/> variantes</b></span></div></td>
                                     <td class="numeric"><span t-if="row.has_cost" t-esc="formatMoney(row.cost)"/><span t-else="" class="no_cost">Sin costo</span></td>
                                     <td class="numeric"><strong t-esc="formatMoney(row.price)"/><small t-if="row.offer_active and row.price !== row.list_price" class="old_price" t-esc="formatMoney(row.list_price)"/></td>
-                                    <td t-att-class="'numeric profit ' + (row.profit &lt; 0 ? 'negative' : 'positive')" t-esc="formatMoney(row.profit)"/>
+                                    <td t-att-class="row.has_cost ? 'numeric profit ' + (row.profit &lt; 0 ? 'negative' : 'positive') : 'numeric no_cost'" t-esc="row.has_cost ? formatMoney(row.profit) : '—'"/>
                                     <td class="numeric margin_cell"><t t-if="row.has_cost and row.margin !== null"><strong t-esc="formatPercent(row.margin)"/><span class="margin_track"><i t-att-class="marginClass(row.margin)" t-att-style="'width:' + marginWidth(row.margin)"/></span></t><span t-else="">—</span></td>
                                 </tr>
                                 <tr t-if="!rows.length"><td colspan="5" class="margins_empty">No hay productos que coincidan con estos filtros.</td></tr>

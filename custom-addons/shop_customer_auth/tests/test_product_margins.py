@@ -20,6 +20,19 @@ class TestProductMargins(TransactionCase):
             "combo_item_ids": [Command.create({"product_id": cls.component.id})],
         })
         cls.combo = cls.Product.create({"name": "Combo margen", "type": "combo", "list_price": 100, "combo_ids": [Command.set([line.id])]})
+        flavor = cls.env["product.attribute"].create({
+            "name": "Sabor margen",
+            "value_ids": [Command.create({"name": "Vainilla"}), Command.create({"name": "Chocolate"})],
+        })
+        cls.variants = cls.Product.create({
+            "name": "Margen con variantes", "sale_ok": True, "list_price": 100,
+            "attribute_line_ids": [Command.create({
+                "attribute_id": flavor.id,
+                "value_ids": [Command.set(flavor.value_ids.ids)],
+            })],
+        })
+        cls.variants.product_variant_ids[0].standard_price = 40
+        cls.variants.product_variant_ids[1].standard_price = 60
 
     def test_returns_effective_prices_costs_and_summary(self):
         result = self.env["shop.product.margin"].get_margin_data()
@@ -34,6 +47,10 @@ class TestProductMargins(TransactionCase):
         self.assertFalse(rows[self.no_cost.id]["has_cost"])
         self.assertEqual(rows[self.combo.id]["cost"], 35)
         self.assertTrue(rows[self.combo.id]["is_combo"])
+        self.assertAlmostEqual(rows[self.variants.id]["cost"], 50)
+        self.assertAlmostEqual(rows[self.variants.id]["margin"], 0.5)
+        self.assertEqual(rows[self.variants.id]["variant_count"], 2)
+        self.assertAlmostEqual(self.variants.margin_percentage, 0.5)
         self.assertGreaterEqual(result["summary"]["no_cost_count"], 1)
         self.assertGreaterEqual(result["summary"]["negative_count"], 1)
 

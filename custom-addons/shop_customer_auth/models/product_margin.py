@@ -27,6 +27,8 @@ class ShopProductMargin(models.AbstractModel):
             ("active", "=", True),
             ("company_id", "in", [company.id, False]),
         ])
+        # Batch-read variant costs before processing rows to avoid a query per template.
+        products.product_variant_ids.with_company(company).mapped("standard_price")
         rows = []
         margins = []
         negative_count = no_cost_count = 0
@@ -48,6 +50,7 @@ class ShopProductMargin(models.AbstractModel):
                 "default_code": product.default_code or "",
                 "category": product.categ_id.display_name or "",
                 "is_combo": product.type == "combo",
+                "variant_count": len(product.product_variant_ids.filtered("active")),
                 "image_url": f"/web/image/product.template/{product.id}/image_128",
                 "cost": cost,
                 "has_cost": has_cost,

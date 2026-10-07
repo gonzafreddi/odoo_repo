@@ -52,7 +52,10 @@ class ProductTemplate(models.Model):
                 for combo in product.combo_ids
             ) if product.type == "combo" else 0.0
 
-    @api.depends("list_price", "standard_price", "combo_cost")
+    @api.depends(
+        "list_price", "standard_price", "combo_cost",
+        "product_variant_ids.active", "product_variant_ids.standard_price",
+    )
     @api.depends_context("company")
     def _compute_margin_percentage(self):
         for product in self:
@@ -65,7 +68,13 @@ class ProductTemplate(models.Model):
 
     def _shop_margin_cost(self):
         self.ensure_one()
-        return self.combo_cost if self.type == "combo" else self.standard_price
+        if self.type == "combo":
+            return self.combo_cost
+        variants = self.product_variant_ids.filtered("active").with_company(self.env.company)
+        if len(variants) > 1:
+            costs = [cost for cost in variants.mapped("standard_price") if cost > 0]
+            return sum(costs) / len(costs) if costs else 0.0
+        return self.standard_price
 
     offer_price = fields.Monetary(
         string="Precio de oferta",
