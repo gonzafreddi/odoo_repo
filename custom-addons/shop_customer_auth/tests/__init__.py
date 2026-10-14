@@ -6,3 +6,4 @@ from . import test_executive_dashboard_payments
 from . import test_combo_cost
 from . import test_product_margins
 from . import test_payment_prices
+from . import test_shop_coupon

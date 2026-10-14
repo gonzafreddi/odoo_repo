@@ -7,7 +7,7 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
     'author': "My Company",
     'website': "https://www.yourcompany.com",
     'category': 'Uncategorized',
-    'version': '19.0.1.6.0',
+    'version': '19.0.1.7.0',
     'license': 'LGPL-3',
     'depends': [
         'base',
@@ -66,6 +66,7 @@ Autenticación de clientes, operaciones de tienda, POS y cobros web.
         'views/templates.xml',
         'views/sale_order_payment_views.xml',
         'views/website_sale_portal_templates.xml',
+        'views/shop_coupon_views.xml',
     ],
     'demo': ['demo/demo.xml'],
 }

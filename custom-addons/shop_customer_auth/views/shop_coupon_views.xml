@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="shop_coupon_list" model="ir.ui.view">
+        <field name="name">shop.coupon.list</field>
+        <field name="model">shop.coupon</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="origin" optional="show"/>
+                <field name="discount_type"/>
+                <field name="discount_value"/>
+                <field name="min_amount" optional="show"/>
+                <field name="date_from" optional="hide"/>
+                <field name="date_to"/>
+                <field name="restricted_email" optional="show"/>
+                <field name="used_count"/>
+                <field name="usage_limit" optional="hide"/>
+                <field name="usage_per_customer" optional="hide"/>
+                <field name="email_sent_at" optional="hide"/>
+                <field name="status" widget="badge"
+                    decoration-success="status == 'active'"
+                    decoration-info="status == 'scheduled'"
+                    decoration-muted="status in ('expired', 'exhausted', 'archived')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="shop_coupon_form" model="ir.ui.view">
+        <field name="name">shop.coupon.form</field>
+        <field name="model">shop.coupon</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="status" widget="badge" class="float-end"
+                        decoration-success="status == 'active'"
+                        decoration-info="status == 'scheduled'"
+                        decoration-muted="status in ('expired', 'exhausted', 'archived')"/>
+                    <div class="oe_title">
+                        <label for="code"/>
+                        <h1><field name="code" placeholder="Vacío = se genera solo, ej. DIAMADRE"/></h1>
+                        <field name="name" placeholder="Descripción, ej. Día de la Madre"/>
+                    </div>
+                    <group>
+                        <group string="Descuento">
+                            <field name="discount_type" widget="radio"/>
+                            <field name="discount_value"/>
+                            <field name="max_discount_amount"
+                                invisible="discount_type != 'percent'"/>
+                            <field name="min_amount"/>
+                        </group>
+                        <group string="Vigencia y límites">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="usage_per_customer"/>
+                            <field name="usage_limit"/>
+                            <field name="restricted_email"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <group invisible="origin == 'manual'">
+                        <group string="Post-compra">
+                            <field name="origin"/>
+                            <field name="source_order_id"/>
+                            <field name="email_sent_at"/>
+                        </group>
+                    </group>
+                    <separator string="Usos"/>
+                    <field name="redemption_ids" readonly="1">
+                        <list create="0" delete="0">
+                            <field name="date"/>
+                            <field name="order_id"/>
+                            <field name="email"/>
+                            <field name="partner_id" optional="hide"/>
+                            <field name="discount_amount" sum="Total"/>
+                            <field name="currency_id" column_invisible="True"/>
+                            <field name="state" widget="badge"
+                                decoration-success="state == 'active'"
+                                decoration-muted="state == 'cancelled'"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="shop_coupon_search" model="ir.ui.view">
+        <field name="name">shop.coupon.search</field>
+        <field name="model">shop.coupon</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="restricted_email"/>
+                <field name="source_order_id"/>
+                <filter name="manual" string="Manuales" domain="[('origin', '=', 'manual')]"/>
+                <filter name="post_purchase" string="Post-compra" domain="[('origin', '=', 'post_purchase')]"/>
+                <separator/>
+                <filter name="archived" string="Archivados" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_origin" string="Origen" context="{'group_by': 'origin'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shop_coupons" model="ir.actions.act_window">
+        <field name="name">Cupones</field>
+        <field name="res_model">shop.coupon</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_manual': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Creá un cupón para la tienda online</p>
+            <p>Por ejemplo DIAMADRE, 15 %, 1 uso por cliente, válido hasta el domingo.</p>
+        </field>
+    </record>
+
+    <record id="shop_coupon_redemption_list" model="ir.ui.view">
+        <field name="name">shop.coupon.redemption.list</field>
+        <field name="model">shop.coupon.redemption</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0">
+                <field name="date"/>
+                <field name="coupon_id"/>
+                <field name="order_id"/>
+                <field name="email"/>
+                <field name="discount_amount" sum="Total"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="state" widget="badge"
+                    decoration-success="state == 'active'"
+                    decoration-muted="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="shop_coupon_redemption_search" model="ir.ui.view">
+        <field name="name">shop.coupon.redemption.search</field>
+        <field name="model">shop.coupon.redemption</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="coupon_id"/>
+                <field name="order_id"/>
+                <field name="email"/>
+                <filter name="used" string="Usados" domain="[('state', '=', 'active')]"/>
+                <group>
+                    <filter name="group_coupon" string="Cupón" context="{'group_by': 'coupon_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shop_coupon_redemptions" model="ir.actions.act_window">
+        <field name="name">Usos de cupones</field>
+        <field name="res_model">shop.coupon.redemption</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_used': 1}</field>
+    </record>
+
+    <menuitem id="menu_shop_coupons_root" name="Cupones"
+        parent="sale.sale_menu_root" sequence="35"
+        groups="sales_team.group_sale_salesman"/>
+    <menuitem id="menu_shop_coupons" name="Cupones"
+        parent="menu_shop_coupons_root" action="action_shop_coupons" sequence="10"/>
+    <menuitem id="menu_shop_coupon_redemptions" name="Usos"
+        parent="menu_shop_coupons_root" action="action_shop_coupon_redemptions" sequence="20"/>
+    <menuitem id="menu_shop_coupon_settings" name="Cupón post-compra"
+        parent="menu_shop_coupons_root" action="sale.action_sale_config_settings" sequence="30"
+        groups="sales_team.group_sale_manager"/>
+
+    <record id="res_config_settings_view_form_shop_coupons" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.shop.coupons</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='pricing_setting_container']" position="after">
+                <block title="Cupones (tienda online)" name="shop_coupons_setting_container">
+                    <setting id="shop_post_purchase_coupon" string="Cupón post-compra"
+                        help="Cada compra web genera un cupón de un solo uso para el email del comprador, que le llega por mail. Los cupones manuales (ej. Día de la Madre) se crean en Ventas → Cupones.">
+                        <field name="x_post_purchase_coupon_enabled"/>
+                        <div class="content-group mt16" invisible="not x_post_purchase_coupon_enabled">
+                            <div class="row">
+                                <label for="x_post_purchase_coupon_discount_type" class="col-lg-4 o_light_label"/>
+                                <field name="x_post_purchase_coupon_discount_type" widget="radio" options="{'horizontal': true}"/>
+                            </div>
+                            <div class="row mt8">
+                                <label for="x_post_purchase_coupon_discount_value" class="col-lg-4 o_light_label"/>
+                                <field name="x_post_purchase_coupon_discount_value"/>
+                            </div>
+                            <div class="row mt8" invisible="x_post_purchase_coupon_discount_type != 'percent'">
+                                <label for="x_post_purchase_coupon_max_discount" class="col-lg-4 o_light_label"/>
+                                <field name="x_post_purchase_coupon_max_discount"/>
+                            </div>
+                            <div class="row mt8">
+                                <label for="x_post_purchase_coupon_min_amount" class="col-lg-4 o_light_label"/>
+                                <field name="x_post_purchase_coupon_min_amount"/>
+                            </div>
+                            <div class="row mt8">
+                                <label for="x_post_purchase_coupon_validity_days" class="col-lg-4 o_light_label"/>
+                                <field name="x_post_purchase_coupon_validity_days"/>
+                            </div>
+                            <div class="row mt8">
+                                <label for="x_post_purchase_coupon_code_prefix" class="col-lg-4 o_light_label"/>
+                                <field name="x_post_purchase_coupon_code_prefix"/>
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="sale_order_form_shop_coupon" model="ir.ui.view">
+        <field name="name">sale.order.form.shop.coupon</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="shop_customer_auth.sale_order_payment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='web_checkout']/group" position="after">
+                <group string="Cupones">
+                    <field name="x_web_coupon_id" readonly="1"/>
+                    <field name="x_web_coupon_discount" readonly="1"
+                        invisible="not x_web_coupon_id"/>
+                    <field name="x_generated_coupon_ids" readonly="1" widget="many2many_tags"
+                        string="Cupón generado"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

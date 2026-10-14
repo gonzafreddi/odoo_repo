@@ -13,3 +13,5 @@ from . import pos_payment_method
 from . import pos_order
 from . import sale_order_payment
 from . import pos_config
+from . import shop_coupon
+from . import res_config_settings

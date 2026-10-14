@@ -9,3 +9,7 @@ access_shop_sale_payment_method_user,shop sale payment method user,model_shop_sa
 access_shop_sale_payment_method_manager,shop sale payment method manager,model_shop_sale_payment_method,sales_team.group_sale_manager,1,1,1,0
 access_shop_sale_payment_user,shop sale payment user,model_shop_sale_payment,sales_team.group_sale_salesman,1,1,1,0
 access_shop_sale_payment_register_wizard,shop sale payment register wizard,model_shop_sale_payment_register_wizard,sales_team.group_sale_salesman,1,1,1,1
+access_shop_coupon_user,shop coupon user,model_shop_coupon,sales_team.group_sale_salesman,1,0,0,0
+access_shop_coupon_manager,shop coupon manager,model_shop_coupon,sales_team.group_sale_manager,1,1,1,1
+access_shop_coupon_redemption_user,shop coupon redemption user,model_shop_coupon_redemption,sales_team.group_sale_salesman,1,0,0,0
+access_shop_coupon_redemption_manager,shop coupon redemption manager,model_shop_coupon_redemption,sales_team.group_sale_manager,1,1,0,0
