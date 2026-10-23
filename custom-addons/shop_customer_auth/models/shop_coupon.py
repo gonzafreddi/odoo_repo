@@ -64,6 +64,11 @@ class ShopCoupon(models.Model):
         string="Compra mínima",
         help="Subtotal mínimo de productos (sin envío) para usarlo. 0 = sin mínimo.",
     )
+    apply_to_combos = fields.Boolean(
+        string="Aplica a combos", default=False,
+        help="Si no está tildado, el descuento se calcula sólo sobre los "
+             "productos sueltos y los combos se cobran a precio completo.",
+    )
     date_from = fields.Date(string="Válido desde")
     date_to = fields.Date(string="Válido hasta", help="Incluido.")
     usage_limit = fields.Integer(
@@ -158,7 +163,8 @@ class ShopCoupon(models.Model):
 
     def action_reset_usage(self):
         """Vuelve a habilitar los usos desde ahora; el historial queda."""
-        self.write({"usage_reset_at": fields.Datetime.now()})
+        # Misma referencia que create_date (inicio de la transacción).
+        self.write({"usage_reset_at": self.env.cr.now()})
         return True
 
     @api.depends("active", "date_from", "date_to", "usage_limit", "used_count")
@@ -279,15 +285,29 @@ class ShopCoupon(models.Model):
             "max_discount_amount": self.max_discount_amount or 0.0,
             "min_amount": self.min_amount or 0.0,
             "date_to": fields.Date.to_string(self.date_to) if self.date_to else False,
+            "apply_to_combos": self.apply_to_combos,
         }
 
+    def _eligible_amount(self, amount, combo_amount):
+        """Monto sobre el que se calcula el descuento (sin combos si no aplica)."""
+        self.ensure_one()
+        if self.apply_to_combos:
+            return amount
+        return max(amount - (combo_amount or 0.0), 0.0)
+
     @api.model
-    def shop_check_coupon(self, code, email, amount):
-        """Vista previa para el checkout web. No reserva el cupón."""
+    def shop_check_coupon(self, code, email, amount, combo_amount=0.0):
+        """Vista previa para el checkout web. No reserva el cupón.
+
+        ``combo_amount`` es la parte de ``amount`` que corresponde a combos.
+        """
         coupon = self._find_by_code(code)
         if not coupon:
             return {"valid": False, "message": _("El cupón no existe.")}
-        amount = float(amount or 0.0)
+        combo_amount = float(combo_amount or 0.0)
+        amount = coupon._eligible_amount(float(amount or 0.0), combo_amount)
+        if amount <= 0 and combo_amount > 0:
+            return {"valid": False, "message": _("Este cupón no aplica a combos.")}
         error = coupon._check_usable(email, amount)
         if error:
             return {"valid": False, "message": error}
@@ -317,6 +337,7 @@ class ShopCoupon(models.Model):
             "discount_value": number("discount_value", 10),
             "max_discount_amount": number("max_discount_amount", 0),
             "min_amount": number("min_amount", 0),
+            "apply_to_combos": params.get_param(PARAM_PREFIX + "apply_to_combos") in ("True", "1", "true"),
             "validity_days": int(number("validity_days", 30)),
             "code_prefix": params.get_param(PARAM_PREFIX + "code_prefix") or "",
         }
@@ -342,6 +363,7 @@ class ShopCoupon(models.Model):
             "discount_value": settings["discount_value"],
             "max_discount_amount": settings["max_discount_amount"],
             "min_amount": settings["min_amount"],
+            "apply_to_combos": settings["apply_to_combos"],
             "date_from": store_today(),
             "date_to": store_today() + timedelta(days=validity_days - 1),
             "usage_limit": 1,
@@ -459,10 +481,11 @@ class SaleOrder(models.Model):
                 order._shop_apply_coupon(code)
         return orders
 
-    def _shop_coupon_lines(self):
+    def _shop_coupon_lines(self, coupon):
         return self.order_line.filtered(
             lambda line: not line.display_type and line.product_id
             and not line.is_delivery and line.price_unit > 0
+            and (coupon.apply_to_combos or line.product_id.type != "combo")
         )
 
     def _shop_apply_coupon(self, code):
@@ -481,7 +504,9 @@ class SaleOrder(models.Model):
             "SELECT id FROM shop_coupon WHERE id = %s FOR UPDATE", [coupon.id]
         )
         coupon.invalidate_recordset(["redemption_ids"])
-        lines = self._shop_coupon_lines()
+        lines = self._shop_coupon_lines(coupon)
+        if not lines and not coupon.apply_to_combos:
+            raise ValidationError(_("Este cupón no aplica a combos."))
         base = sum(lines.mapped("price_total"))
         email = normalize_email(self.x_web_customer_email)
         error = coupon._check_usable(email, base, exclude_order=self)

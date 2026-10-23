@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from odoo import Command
 from odoo.exceptions import ValidationError
 from odoo.tests import TransactionCase, tagged
 
@@ -18,17 +19,44 @@ class TestShopCoupon(TransactionCase):
             "taxes_id": [(6, 0, [])],
         })
         cls.Coupon = cls.env["shop.coupon"]
+        combo_line = cls.env["product.combo"].create({
+            "name": "Elegí proteína",
+            "combo_item_ids": [Command.create({"product_id": cls.product.id})],
+        })
+        cls.combo = cls.env["product.product"].create({
+            "name": "Combo test cupón",
+            "type": "combo",
+            "list_price": 5000.0,
+            "taxes_id": [(6, 0, [])],
+            "combo_ids": [Command.set([combo_line.id])],
+        })
 
-    def _order(self, email="buyer@example.com", code=None, qty=10, price=1000.0):
+    def _order(self, email="buyer@example.com", code=None, qty=10, price=1000.0,
+               combos=0):
+        lines = [(0, 0, {
+            "product_id": self.product.id,
+            "product_uom_qty": qty,
+            "price_unit": price,
+            "tax_ids": [(6, 0, [])],
+        })] if qty else []
+        if combos:
+            # Como lo arma la web: el combo con su precio y los componentes en $0.
+            lines += [(0, 0, {
+                "product_id": self.combo.id,
+                "product_uom_qty": combos,
+                "price_unit": 5000.0,
+                "tax_ids": [(6, 0, [])],
+            }), (0, 0, {
+                "product_id": self.product.id,
+                "name": "Combo test cupón - Elegí proteína",
+                "product_uom_qty": combos,
+                "price_unit": 0.0,
+                "tax_ids": [(6, 0, [])],
+            })]
         vals = {
             "partner_id": self.partner.id,
             "x_web_customer_email": email,
-            "order_line": [(0, 0, {
-                "product_id": self.product.id,
-                "product_uom_qty": qty,
-                "price_unit": price,
-                "tax_ids": [(6, 0, [])],
-            })],
+            "order_line": lines,
         }
         if code:
             vals["x_web_coupon_code"] = code
@@ -176,3 +204,48 @@ class TestShopCoupon(TransactionCase):
         coupon.invalidate_recordset()
         self.assertEqual(coupon.used_count, 1)
         self.assertEqual(coupon.total_used_count, 2)
+
+    def test_coupon_excludes_combos_by_default(self):
+        self.Coupon.create({"name": "Sin combos", "code": "SINCOMBOS",
+                            "discount_value": 10, "usage_per_customer": 0})
+        # 10 × 1000 sueltos + 1 combo de 5000: descuenta 10 % sólo de los 10000.
+        order = self._order(code="SINCOMBOS", combos=1)
+        self.assertEqual(order.x_web_coupon_discount, 1000.0)
+        self.assertEqual(order.amount_total, 14000.0)
+        combo_line = order.order_line.filtered(lambda l: l.product_id == self.combo)
+        self.assertFalse(combo_line.discount)
+        check = self.Coupon.shop_check_coupon("SINCOMBOS", "x@example.com", 15000, 5000)
+        self.assertEqual(check["discount_amount"], 1000.0)
+        self.assertFalse(check["apply_to_combos"])
+        # Sólo combos en el carrito: no aplica.
+        check = self.Coupon.shop_check_coupon("SINCOMBOS", "x@example.com", 5000, 5000)
+        self.assertFalse(check["valid"])
+        self.assertIn("combos", check["message"])
+        with self.assertRaisesRegex(ValidationError, "no aplica a combos"):
+            self._order(code="SINCOMBOS", qty=0, combos=1)
+
+    def test_coupon_minimum_ignores_combos(self):
+        self.Coupon.create({"name": "Mínimo", "code": "MINIMO", "discount_value": 10,
+                            "min_amount": 8000, "usage_per_customer": 0})
+        check = self.Coupon.shop_check_coupon("MINIMO", "x@example.com", 12000, 5000)
+        self.assertFalse(check["valid"])
+        with self.assertRaisesRegex(ValidationError, "compra mínima"):
+            self._order(code="MINIMO", qty=7, combos=1)
+
+    def test_coupon_can_include_combos(self):
+        self.Coupon.create({"name": "Con combos", "code": "CONCOMBOS",
+                            "discount_value": 10, "apply_to_combos": True})
+        order = self._order(code="CONCOMBOS", combos=1)
+        self.assertEqual(order.x_web_coupon_discount, 1500.0)
+        check = self.Coupon.shop_check_coupon("CONCOMBOS", "x@example.com", 15000, 5000)
+        self.assertEqual(check["discount_amount"], 1500.0)
+
+    def test_post_purchase_coupon_follows_combo_setting(self):
+        self._set_post_purchase()
+        order = self._order()
+        order.action_confirm()
+        self.assertFalse(order.x_generated_coupon_ids.apply_to_combos)
+        self._set_post_purchase(apply_to_combos="True")
+        order = self._order(email="other@example.com")
+        order.action_confirm()
+        self.assertTrue(order.x_generated_coupon_ids.apply_to_combos)

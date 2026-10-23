@@ -35,6 +35,11 @@ class ResConfigSettings(models.TransientModel):
         config_parameter=PARAM_PREFIX + "min_amount",
         help="Subtotal mínimo de productos (sin envío). 0 = sin mínimo.",
     )
+    x_post_purchase_coupon_apply_to_combos = fields.Boolean(
+        string="Aplica a combos",
+        config_parameter=PARAM_PREFIX + "apply_to_combos",
+        help="Sin tildar, el cupón descuenta sólo productos sueltos.",
+    )
     x_post_purchase_coupon_validity_days = fields.Integer(
         string="Válido por (días)",
         config_parameter=PARAM_PREFIX + "validity_days",
