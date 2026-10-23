@@ -15,6 +15,9 @@
                 <field name="date_to"/>
                 <field name="restricted_email" optional="show"/>
                 <field name="used_count"/>
+                <field name="total_used_count" optional="hide"/>
+                <field name="usage_reset_days" optional="hide"/>
+                <field name="next_reset_at" optional="hide"/>
                 <field name="usage_limit" optional="hide"/>
                 <field name="usage_per_customer" optional="hide"/>
                 <field name="email_sent_at" optional="hide"/>
@@ -31,6 +34,11 @@
         <field name="model">shop.coupon</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="action_reset_usage" type="object" string="Reiniciar usos ahora"
+                        invisible="origin != 'manual'"
+                        confirm="Todos los clientes van a poder volver a usar el cupón. Los usos anteriores quedan en el historial. ¿Continuar?"/>
+                </header>
                 <sheet>
                     <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger" invisible="active"/>
                     <field name="status" widget="badge" class="float-end"
@@ -59,6 +67,18 @@
                             <field name="active" invisible="1"/>
                         </group>
                     </group>
+                    <group invisible="origin != 'manual'">
+                        <group string="Reinicio de usos">
+                            <field name="usage_reset_days"/>
+                            <field name="period_start" invisible="not period_start"/>
+                            <field name="next_reset_at" invisible="not next_reset_at"/>
+                            <field name="usage_reset_at" invisible="not usage_reset_at"/>
+                        </group>
+                        <group string="Contadores">
+                            <field name="used_count" string="Usos del ciclo actual"/>
+                            <field name="total_used_count"/>
+                        </group>
+                    </group>
                     <group invisible="origin == 'manual'">
                         <group string="Post-compra">
                             <field name="origin"/>
@@ -68,7 +88,8 @@
                     </group>
                     <separator string="Usos"/>
                     <field name="redemption_ids" readonly="1">
-                        <list create="0" delete="0">
+                        <list create="0" delete="0" decoration-muted="not in_current_period">
+                            <field name="in_current_period" column_invisible="True"/>
                             <field name="date"/>
                             <field name="order_id"/>
                             <field name="email"/>

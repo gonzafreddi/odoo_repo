@@ -74,6 +74,21 @@ class ShopCoupon(models.Model):
         string="Usos por cliente", default=1,
         help="Cuántas veces puede usarlo cada cliente (por email). 0 = sin límite.",
     )
+    usage_reset_days = fields.Integer(
+        string="Reiniciar usos cada (días)", default=0,
+        help="Cada cuántos días se vuelven a habilitar los usos (por cliente y "
+             "totales). Los usos anteriores quedan en el historial. 0 = nunca.",
+    )
+    usage_reset_at = fields.Datetime(
+        string="Último reinicio manual", readonly=True, copy=False,
+        help="Los ciclos se cuentan desde acá (o desde la creación del cupón).",
+    )
+    period_start = fields.Datetime(
+        string="Ciclo actual desde", compute="_compute_period",
+    )
+    next_reset_at = fields.Datetime(
+        string="Próximo reinicio", compute="_compute_period",
+    )
     restricted_email = fields.Char(
         string="Sólo para el email",
         help="Si se completa, sólo lo puede usar una compra hecha con este email.",
@@ -88,7 +103,13 @@ class ShopCoupon(models.Model):
     redemption_ids = fields.One2many(
         "shop.coupon.redemption", "coupon_id", string="Usos",
     )
-    used_count = fields.Integer(string="Usado", compute="_compute_used_count")
+    used_count = fields.Integer(
+        string="Usado", compute="_compute_used_count",
+        help="Usos del ciclo actual (si el cupón se reinicia) o totales.",
+    )
+    total_used_count = fields.Integer(
+        string="Usos históricos", compute="_compute_used_count",
+    )
     status = fields.Selection(
         [
             ("active", "Vigente"),
@@ -100,12 +121,45 @@ class ShopCoupon(models.Model):
         string="Estado", compute="_compute_status",
     )
 
-    @api.depends("redemption_ids.state")
+    def _period_bounds(self, now=None):
+        """(inicio del ciclo actual, próximo reinicio); False si no aplica."""
+        self.ensure_one()
+        now = now or fields.Datetime.now()
+        anchor = self.usage_reset_at or self.create_date or now
+        if not self.usage_reset_days or self.usage_reset_days <= 0:
+            return self.usage_reset_at or False, False
+        length = timedelta(days=self.usage_reset_days)
+        cycles = max((now - anchor) // length, 0)
+        start = anchor + cycles * length
+        return start, start + length
+
+    @api.depends("usage_reset_days", "usage_reset_at")
+    def _compute_period(self):
+        for coupon in self:
+            coupon.period_start, coupon.next_reset_at = coupon._period_bounds()
+
+    def _current_redemptions(self, exclude_order=None):
+        """Usos activos que cuentan para los límites en el ciclo actual."""
+        self.ensure_one()
+        start = self._period_bounds()[0]
+        return self.redemption_ids.filtered(
+            lambda r: r.state == "active"
+            and (not start or r.create_date >= start)
+            and (not exclude_order or r.order_id != exclude_order)
+        )
+
+    @api.depends("redemption_ids.state", "usage_reset_days", "usage_reset_at")
     def _compute_used_count(self):
         for coupon in self:
-            coupon.used_count = len(
+            coupon.used_count = len(coupon._current_redemptions())
+            coupon.total_used_count = len(
                 coupon.redemption_ids.filtered(lambda r: r.state == "active")
             )
+
+    def action_reset_usage(self):
+        """Vuelve a habilitar los usos desde ahora; el historial queda."""
+        self.write({"usage_reset_at": fields.Datetime.now()})
+        return True
 
     @api.depends("active", "date_from", "date_to", "usage_limit", "used_count")
     def _compute_status(self):
@@ -142,7 +196,7 @@ class ShopCoupon(models.Model):
 
     @api.constrains("discount_type", "discount_value", "max_discount_amount",
                     "min_amount", "usage_limit", "usage_per_customer",
-                    "date_from", "date_to", "code")
+                    "usage_reset_days", "date_from", "date_to", "code")
     def _check_values(self):
         for coupon in self:
             if not coupon.code or " " in coupon.code:
@@ -152,7 +206,8 @@ class ShopCoupon(models.Model):
             if coupon.discount_type == "percent" and coupon.discount_value > 100:
                 raise ValidationError(_("El porcentaje no puede superar el 100 %."))
             if min(coupon.max_discount_amount, coupon.min_amount,
-                   coupon.usage_limit, coupon.usage_per_customer) < 0:
+                   coupon.usage_limit, coupon.usage_per_customer,
+                   coupon.usage_reset_days) < 0:
                 raise ValidationError(_("Los topes, mínimos y límites no pueden ser negativos."))
             if coupon.date_from and coupon.date_to and coupon.date_from > coupon.date_to:
                 raise ValidationError(_("La fecha «desde» no puede ser posterior a «hasta»."))
@@ -189,9 +244,7 @@ class ShopCoupon(models.Model):
             return _("El cupón está vencido.")
         if self.restricted_email and self.restricted_email != email:
             return _("Este cupón es personal y sólo vale con el email al que fue enviado.")
-        active = self.redemption_ids.filtered(
-            lambda r: r.state == "active" and (not exclude_order or r.order_id != exclude_order)
-        )
+        active = self._current_redemptions(exclude_order=exclude_order)
         if self.usage_limit and len(active) >= self.usage_limit:
             return _("Este cupón ya fue utilizado.")
         if self.usage_per_customer and email and len(
@@ -367,6 +420,18 @@ class ShopCouponRedemption(models.Model):
         default="active", required=True, string="Estado",
     )
     date = fields.Datetime(related="create_date", string="Fecha")
+    in_current_period = fields.Boolean(
+        string="Cuenta en el ciclo actual", compute="_compute_in_current_period",
+    )
+
+    @api.depends("state", "coupon_id.usage_reset_days", "coupon_id.usage_reset_at")
+    def _compute_in_current_period(self):
+        for redemption in self:
+            redemption.in_current_period = (
+                redemption.state == "active"
+                and redemption.coupon_id
+                and redemption in redemption.coupon_id._current_redemptions()
+            )
 
 
 class SaleOrder(models.Model):

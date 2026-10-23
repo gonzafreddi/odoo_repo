@@ -133,3 +133,46 @@ class TestShopCoupon(TransactionCase):
         order._action_cancel()
         self.assertFalse(generated.active)
         self.assertTrue(self._order(email="other@example.com", code="UNICO"))
+
+    def _backdate(self, records, days):
+        self.env.cr.execute(
+            f"UPDATE {records._table} SET create_date = create_date - interval '%s days' "
+            "WHERE id IN %s", [days, tuple(records.ids)],
+        )
+        records.invalidate_recordset(["create_date"])
+
+    def test_usage_resets_every_n_days_and_keeps_history(self):
+        coupon = self.Coupon.create({"name": "Mensual", "code": "MENSUAL",
+                                     "discount_value": 10, "usage_per_customer": 1,
+                                     "usage_limit": 1, "usage_reset_days": 30})
+        first = self._order(email="a@example.com", code="MENSUAL")
+        with self.assertRaisesRegex(ValidationError, "ya fue utilizado"):
+            self._order(email="b@example.com", code="MENSUAL")
+        # 31 días después arranca otro ciclo.
+        self._backdate(coupon, 31)
+        self._backdate(coupon.redemption_ids, 31)
+        coupon.invalidate_recordset()
+        self.assertEqual(coupon.used_count, 0)
+        self.assertEqual(coupon.status, "active")
+        second = self._order(email="a@example.com", code="MENSUAL")
+        coupon.invalidate_recordset()
+        self.assertEqual(coupon.used_count, 1)
+        self.assertEqual(coupon.total_used_count, 2)
+        self.assertEqual(coupon.redemption_ids.order_id, first | second)
+        old = coupon.redemption_ids.filtered(lambda r: r.order_id == first)
+        self.assertFalse(old.in_current_period)
+        self.assertTrue(coupon.next_reset_at > coupon.period_start)
+
+    def test_manual_reset_reenables_customers(self):
+        coupon = self.Coupon.create({"name": "DIAMADRE", "code": "DIAMADRE",
+                                     "discount_value": 10, "usage_per_customer": 1})
+        self._order(email="a@example.com", code="DIAMADRE")
+        with self.assertRaisesRegex(ValidationError, "Ya usaste"):
+            self._order(email="a@example.com", code="DIAMADRE")
+        self._backdate(coupon.redemption_ids, 1)
+        coupon.action_reset_usage()
+        self.assertTrue(self.Coupon.shop_check_coupon("DIAMADRE", "a@example.com", 5000)["valid"])
+        self._order(email="a@example.com", code="DIAMADRE")
+        coupon.invalidate_recordset()
+        self.assertEqual(coupon.used_count, 1)
+        self.assertEqual(coupon.total_used_count, 2)
