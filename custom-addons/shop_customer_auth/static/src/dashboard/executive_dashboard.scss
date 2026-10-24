@@ -116,6 +116,8 @@
 .mp_tables td { font-family: var(--font-data); }
 .mp_tables td small { color: var(--muted); }
 .mp_tables tr.is-top th, .mp_tables tr.is-top td { background: #eaf3f1; font-weight: 700; }
+.coupon_panel .mp_tables { grid-template-columns: 1fr; }
+.coupon_panel .mp_tables th small { margin-left: .35rem; color: var(--muted); font-weight: 400; }
 .daily_sales_view { margin-top: 1.25rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--card); }
 .daily_sales_heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--muted); }
 .daily_sales_heading > div { display: flex; align-items: center; gap: .65rem; }

@@ -249,3 +249,39 @@ class TestShopCoupon(TransactionCase):
         order = self._order(email="other@example.com")
         order.action_confirm()
         self.assertTrue(order.x_generated_coupon_ids.apply_to_combos)
+
+    def test_executive_dashboard_counts_coupon_usage(self):
+        self.Coupon.create({"name": "Día de la Madre", "code": "TABLERO15",
+                            "discount_value": 15})
+        self._set_post_purchase()
+        first = self._order(email="a@example.com", code="TABLERO15")
+        second = self._order(email="b@example.com", code="TABLERO15", qty=2)
+        plain = self._order(email="c@example.com")
+        (first | second | plain).action_confirm()
+        generated = first.x_generated_coupon_ids
+        with_generated = self._order(email="a@example.com", code=generated.code, qty=5)
+        with_generated.action_confirm()
+        draft = self._order(email="d@example.com", code="TABLERO15")
+        orders = first | second | plain | with_generated | draft
+        # Período aislado de los datos que ya tenga la base.
+        orders.write({"date_order": "2099-05-10 12:00:00"})
+
+        data = self.env["shop.executive.dashboard"].get_dashboard_data(
+            "2099-05-10", "2099-05-10"
+        )
+        coupons = data["coupons"]
+        # El borrador no cuenta: el tablero solo mira ventas confirmadas.
+        self.assertEqual(coupons["count"], 3)
+        self.assertAlmostEqual(coupons["discount"], 1500.0 + 300.0 + 500.0)
+        self.assertAlmostEqual(coupons["sales"], 8500.0 + 1700.0 + 4500.0)
+        self.assertAlmostEqual(coupons["order_share"], 75.0)
+        by_code = {row["code"]: row for row in coupons["by_coupon"]}
+        self.assertEqual(by_code["TABLERO15"]["count"], 2)
+        self.assertAlmostEqual(by_code["TABLERO15"]["discount"], 1800.0)
+        self.assertEqual(by_code["Post-compra"]["count"], 1)
+        self.assertAlmostEqual(by_code["Post-compra"]["discount"], 500.0)
+        self.assertEqual(
+            set(data["record_ids"]["coupon_orders"]),
+            set((first | second | with_generated).ids),
+        )
+        self.assertNotIn("order_ids", coupons)

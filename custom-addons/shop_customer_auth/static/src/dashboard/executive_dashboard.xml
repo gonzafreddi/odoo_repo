@@ -172,6 +172,56 @@
                     </t>
                 </section>
 
+                <section class="dashboard_panel mp_panel coupon_panel" aria-labelledby="coupons-title" t-if="state.data.coupons">
+                    <t t-set="cp" t-value="state.data.coupons"/>
+                    <div class="panel_heading">
+                        <div><span class="section_code">CUPONES</span><h2 id="coupons-title">Cupones usados en la web</h2></div>
+                        <button t-if="cp.count" t-on-click="() => this.openRecords('coupon_orders')">Ver pedidos con cupón</button>
+                    </div>
+                    <p t-if="!cp.count" class="mp_empty">No se usaron cupones en ventas web confirmadas del período.</p>
+                    <t t-else="">
+                        <div class="mp_summary">
+                            <article>
+                                <span>Cupones usados</span>
+                                <strong t-esc="formatNumber(cp.count)"/>
+                                <small><t t-esc="formatPercentage(cp.order_share)"/> de los pedidos web · <em t-att-class="comparisonClass(state.data.comparisons.coupon_count)"><t t-esc="comparison(state.data.comparisons.coupon_count)"/> vs. anterior</em></small>
+                            </article>
+                            <article class="is-cost">
+                                <span>Descuento otorgado</span>
+                                <strong t-esc="formatMoney(cp.discount)"/>
+                                <small>Lo que ahorraron los clientes · <em t-att-class="comparisonClass(state.data.comparisons.coupon_discount, true)"><t t-esc="comparison(state.data.comparisons.coupon_discount)"/> vs. anterior</em></small>
+                            </article>
+                            <article>
+                                <span>Ventas con cupón</span>
+                                <strong t-esc="formatMoney(cp.sales)"/>
+                                <small><t t-esc="formatPercentage(cp.sales_share)"/> de las ventas web · sin impuestos</small>
+                            </article>
+                            <article>
+                                <span>Descuento promedio</span>
+                                <strong t-esc="formatMoney(cp.average_discount)"/>
+                                <small>Por pedido con cupón</small>
+                            </article>
+                        </div>
+                        <div class="mp_tables">
+                            <div class="table_scroll">
+                                <h3>Por cupón</h3>
+                                <table>
+                                    <thead><tr><th>Cupón</th><th>Usos</th><th>Descuento</th><th>Ventas con cupón</th><th>Part. del descuento</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="cp.by_coupon" t-as="row" t-key="row.origin + row.id">
+                                            <th><t t-esc="row.code"/> <small t-esc="row.name"/></th>
+                                            <td t-esc="formatNumber(row.count)"/>
+                                            <td t-esc="formatMoney(row.discount)"/>
+                                            <td t-esc="formatMoney(row.sales)"/>
+                                            <td t-esc="formatPercent(row.discount, cp.discount)"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+                </section>
+
                 <div t-if="!state.data.categories.length &amp;&amp; !state.data.expense_accounts.length" class="empty_state">
                     <strong>No hay movimientos en este período.</strong>
                     <span>Probá ampliar las fechas. La foto de stock sigue disponible en los indicadores.</span>

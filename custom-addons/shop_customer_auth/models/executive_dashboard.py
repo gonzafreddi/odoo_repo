@@ -424,6 +424,64 @@ class ShopExecutiveDashboard(models.AbstractModel):
         }
 
     @api.model
+    def _coupon_data(self, sales):
+        """Cupones usados en las ventas web confirmadas del período."""
+        company = self.env.company
+        orders = self.env["sale.order"].sudo().browse(
+            sales["channels"]["store"]["document_ids"]
+        ).exists().filtered("x_web_coupon_id")
+        totals = {"count": 0, "discount": 0.0, "sales": 0.0}
+        by_coupon = {}
+        for order in orders:
+            date = fields.Date.to_date(order.date_order)
+            # Lo que ahorró el cliente (con impuestos) y lo que pagó sin impuestos,
+            # igual que el resto de las ventas del tablero.
+            discount = order.currency_id._convert(
+                order.x_web_coupon_discount, company.currency_id, company, date
+            )
+            amount = order.currency_id._convert(
+                order.amount_untaxed, company.currency_id, company, date
+            )
+            coupon = order.x_web_coupon_id
+            row = by_coupon.setdefault(coupon.id, {
+                "id": coupon.id,
+                "code": coupon.code,
+                "name": coupon.name,
+                "origin": coupon.origin,
+                "count": 0,
+                "discount": 0.0,
+                "sales": 0.0,
+            })
+            for bucket in (totals, row):
+                bucket["count"] += 1
+                bucket["discount"] += discount
+                bucket["sales"] += amount
+        # Los post-compra son de un solo uso: se agrupan en una fila.
+        rows = [row for row in by_coupon.values() if row["origin"] == "manual"]
+        generated = [row for row in by_coupon.values() if row["origin"] != "manual"]
+        if generated:
+            rows.append({
+                "id": 0,
+                "code": _("Post-compra"),
+                "name": _("%s cupones automáticos", len(generated)),
+                "origin": "post_purchase",
+                "count": sum(row["count"] for row in generated),
+                "discount": sum(row["discount"] for row in generated),
+                "sales": sum(row["sales"] for row in generated),
+            })
+        rows.sort(key=lambda item: item["discount"], reverse=True)
+        store_sales = sales["channels"]["store"]["amount"]
+        store_orders = len(sales["channels"]["store"]["document_ids"])
+        return {
+            **totals,
+            "average_discount": totals["discount"] / totals["count"] if totals["count"] else 0.0,
+            "sales_share": totals["sales"] / store_sales * 100 if store_sales else 0.0,
+            "order_share": totals["count"] / store_orders * 100 if store_orders else 0.0,
+            "by_coupon": rows,
+            "order_ids": orders.ids,
+        }
+
+    @api.model
     def _purchase_data(self, start, end):
         company = self.env.company
         orders = self.env["purchase.order"].sudo().search([
@@ -530,6 +588,8 @@ class ShopExecutiveDashboard(models.AbstractModel):
         payment_methods = self._payment_method_data(sales)
         mercadopago = self._mercadopago_data(start, end)
         previous_mercadopago = self._mercadopago_data(previous_start, previous_end)
+        coupons = self._coupon_data(sales)
+        previous_coupons = self._coupon_data(previous_sales)
 
         category_keys = (
             set(sales["by_category"])
@@ -625,6 +685,10 @@ class ShopExecutiveDashboard(models.AbstractModel):
             "mercadopago_amount": self._comparison(
                 mercadopago["amount"], previous_mercadopago["amount"]
             ),
+            "coupon_count": self._comparison(coupons["count"], previous_coupons["count"]),
+            "coupon_discount": self._comparison(
+                coupons["discount"], previous_coupons["discount"]
+            ),
             "purchases": self._comparison(purchases["total"], previous_purchases["total"]),
             "operating_result": self._comparison(operating_result, previous_result),
             "average_ticket": self._comparison(ticket, previous_ticket),
@@ -688,6 +752,10 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 key: value for key, value in mercadopago.items()
                 if key != "payment_ids"
             },
+            "coupons": {
+                key: value for key, value in coupons.items()
+                if key != "order_ids"
+            },
             "categories": categories,
             "expense_accounts": expense_accounts,
             "top_products_by_amount": top_products_by_amount,
@@ -704,6 +772,7 @@ class ShopExecutiveDashboard(models.AbstractModel):
                 "stock": stock["product_ids"],
                 "low_stock": [item["id"] for item in stock["low_stock"]],
                 "mercadopago_payments": mercadopago["payment_ids"],
+                "coupon_orders": coupons["order_ids"],
             },
         }
 

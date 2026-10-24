@@ -415,6 +415,7 @@ export class ExecutiveDashboard extends Component {
             store_sales: { name: "Ventas Web", res_model: "sale.order", views: [[false, "list"], [false, "form"]] },
             other_sales: { name: "Otras ventas facturadas", res_model: "account.move", views: [[false, "list"], [false, "form"]] },
             mercadopago_payments: { name: "Cobros con Mercado Pago", res_model: "shop.sale.payment", views: [[false, "list"], [false, "form"]] },
+            coupon_orders: { name: "Pedidos web con cupón", res_model: "sale.order", views: [[false, "list"], [false, "form"]] },
         };
         if (!ids.length) {
             this.notification.add("No hay registros relacionados para abrir.", { type: "info" });
