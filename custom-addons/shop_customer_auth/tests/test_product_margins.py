@@ -51,6 +51,10 @@ class TestProductMargins(TransactionCase):
         self.assertAlmostEqual(rows[self.variants.id]["margin"], 0.5)
         self.assertEqual(rows[self.variants.id]["variant_count"], 2)
         self.assertAlmostEqual(self.variants.margin_percentage, 0.5)
+        self.assertAlmostEqual(self.normal.margin_percentage, 0.4)
+        self.assertAlmostEqual(self.offer.margin_percentage, 0.25)
+        self.offer.offer_active = False
+        self.assertAlmostEqual(self.offer.margin_percentage, 0.4)
         self.assertGreaterEqual(result["summary"]["no_cost_count"], 1)
         self.assertGreaterEqual(result["summary"]["negative_count"], 1)
 
