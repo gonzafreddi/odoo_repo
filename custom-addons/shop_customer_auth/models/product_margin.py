@@ -36,7 +36,7 @@ class ShopProductMargin(models.AbstractModel):
             cost = product._shop_margin_cost()
             list_price = product.list_price
             offer_active = bool(product.offer_active)
-            price = product.offer_price if offer_active and product.offer_price > 0 else list_price
+            price = product._shop_margin_price()
             profit = price - cost
             margin = profit / price if price else None
             has_cost = cost > 0

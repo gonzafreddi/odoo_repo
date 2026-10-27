@@ -53,18 +53,22 @@ class ProductTemplate(models.Model):
             ) if product.type == "combo" else 0.0
 
     @api.depends(
-        "list_price", "standard_price", "combo_cost",
+        "list_price", "offer_active", "offer_price", "standard_price", "combo_cost",
         "product_variant_ids.active", "product_variant_ids.standard_price",
     )
     @api.depends_context("company")
     def _compute_margin_percentage(self):
         for product in self:
             cost = product._shop_margin_cost()
-            product.margin_percentage = (
-                (product.list_price - cost) / product.list_price
-                if product.list_price
-                else 0.0
-            )
+            price = product._shop_margin_price()
+            product.margin_percentage = (price - cost) / price if price else 0.0
+
+    def _shop_margin_price(self):
+        """Precio de oferta si la oferta está activa, si no el precio de venta."""
+        self.ensure_one()
+        if self.offer_active and self.offer_price > 0:
+            return self.offer_price
+        return self.list_price
 
     def _shop_margin_cost(self):
         self.ensure_one()
