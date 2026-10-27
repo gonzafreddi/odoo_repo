@@ -5,6 +5,10 @@
         <field name="model">product.category</field>
         <field name="inherit_id" ref="product.product_category_form_view"/>
         <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]" position="before">
+                <field name="image_1920" widget="image" class="oe_avatar"
+                       options="{'preview_image': 'image_128'}"/>
+            </xpath>
             <xpath expr="//group[@name='first']" position="after">
                 <group name="description">
                     <field name="description" placeholder="Ingrese una descripción de la categoría..."/>
