@@ -35,6 +35,10 @@ class TestPaymentPrices(TransactionCase):
         product = self._product()
         self.assertEqual(product.card_price, product.cash_price)
 
+    def test_product_free_shipping_flag_is_stored(self):
+        product = self._product(free_shipping=True)
+        self.assertTrue(product.free_shipping)
+
     def test_invalid_parameter_means_no_surcharge(self):
         self._set_surcharge("abc")
         self.assertEqual(self._product().card_price, 100000.0)

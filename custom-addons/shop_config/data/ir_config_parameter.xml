@@ -21,5 +21,9 @@
             <field name="key">shop_config.card_surcharge_percent</field>
             <field name="value">0</field>
         </record>
+        <record id="param_interest_free_installments" model="ir.config_parameter">
+            <field name="key">shop_config.interest_free_installments</field>
+            <field name="value">0</field>
+        </record>
     </data>
 </odoo>

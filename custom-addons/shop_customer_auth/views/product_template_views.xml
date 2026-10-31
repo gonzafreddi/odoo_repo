@@ -11,6 +11,7 @@
             </field>
             <xpath expr="//div[@name='list_price_uom']" position="after">
                 <field name="offer_active"/>
+                <field name="free_shipping"/>
                 <field name="offer_price" widget="monetary"
                     options="{'currency_field': 'currency_id', 'field_digits': True}"/>
                 <field name="combo_cost" widget="monetary" invisible="type != 'combo'"
@@ -34,6 +35,7 @@
             </field>
             <field name="list_price" position="after">
                 <field name="offer_active" optional="show"/>
+                <field name="free_shipping" optional="show"/>
                 <field name="offer_price" widget="monetary"
                     options="{'currency_field': 'currency_id'}" optional="show"/>
                 <field name="combo_cost" widget="monetary" optional="show"

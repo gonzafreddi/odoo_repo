@@ -29,6 +29,12 @@ class ProductTemplate(models.Model):
         help="Indica si el precio de oferta debe aplicarse al producto.",
     )
 
+    free_shipping = fields.Boolean(
+        string="Envío gratis",
+        default=False,
+        help="Si está activo, el envío de todo el pedido será gratis cuando este producto esté incluido.",
+    )
+
     combo_cost = fields.Float(
         string="Costo del combo",
         compute="_compute_combo_cost",

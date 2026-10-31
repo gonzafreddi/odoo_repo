@@ -8,6 +8,7 @@
     "depends": ["sale_management"],
     "data": [
         "data/ir_config_parameter.xml",
+        "data/cyber_campaign_defaults.xml",
         "views/res_config_settings_views.xml",
     ],
     "installable": True,

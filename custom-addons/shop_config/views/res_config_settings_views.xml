@@ -33,6 +33,38 @@
                         </div>
                     </div>
                 </setting>
+                <setting id="suplex_interest_free_installments" string="Cuotas sin interés (tienda online)"
+                         help="La tienda muestra el importe de cada cuota calculado sobre el precio de tarjeta.">
+                    <div class="content-group">
+                        <div class="row">
+                            <label for="x_interest_free_installments" class="col-lg-4 o_light_label"/>
+                            <field name="x_interest_free_installments"/>
+                        </div>
+                    </div>
+                </setting>
+                <setting id="suplex_cyber_campaign" string="Cyber Suplex"
+                         help="Controla la campaña temporal que se muestra en la tienda online. Las horas se ingresan en horario de Buenos Aires.">
+                    <field name="x_cyber_campaign_enabled"/>
+                    <div class="content-group mt16">
+                        <div class="row">
+                            <label for="x_cyber_campaign_start_local" class="col-lg-4 o_light_label"/>
+                            <field name="x_cyber_campaign_start_local" placeholder="2026-11-02 00:00"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="x_cyber_campaign_end_exclusive_local" class="col-lg-4 o_light_label"/>
+                            <field name="x_cyber_campaign_end_exclusive_local" placeholder="2026-11-05 00:00"/>
+                        </div>
+                        <p class="text-muted mt8">El fin es exclusivo: la campaña sigue activa durante todo el minuto anterior (23:59).</p>
+                        <div class="row mt8">
+                            <label for="x_cyber_campaign_destination_url" class="col-lg-4 o_light_label"/>
+                            <field name="x_cyber_campaign_destination_url" placeholder="/productos"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="x_cyber_campaign_id" class="col-lg-4 o_light_label"/>
+                            <field name="x_cyber_campaign_id" placeholder="cyber-suplex-2026"/>
+                        </div>
+                    </div>
+                </setting>
             </xpath>
         </field>
     </record>
