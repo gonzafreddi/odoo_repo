@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_form_shipping_measurements" model="ir.ui.view">
+        <field name="name">product.template.form.shipping.measurements</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='general_information']" position="after">
+                <page string="Envío" name="shipping_measurements">
+                    <group>
+                        <group string="Medidas para Correo Argentino">
+                            <field name="x_shipping_weight_g"/>
+                            <field name="x_shipping_length_cm"/>
+                            <field name="x_shipping_width_cm"/>
+                            <field name="x_shipping_height_cm"/>
+                        </group>
+                        <group>
+                            <div class="text-muted">
+                                Ingresá las medidas reales del producto preparado. Los productos sin medidas completas no se podrán cotizar.
+                            </div>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

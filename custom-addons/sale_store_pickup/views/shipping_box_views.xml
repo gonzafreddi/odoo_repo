@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sale_store_shipping_box_view_list" model="ir.ui.view">
+        <field name="name">sale.store.shipping.box.list</field>
+        <field name="model">sale.store.shipping.box</field>
+        <field name="arch" type="xml">
+            <list string="Cajas postales" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="inner_length_cm"/>
+                <field name="inner_width_cm"/>
+                <field name="inner_height_cm"/>
+                <field name="outer_length_cm"/>
+                <field name="outer_width_cm"/>
+                <field name="outer_height_cm"/>
+                <field name="tare_weight_g"/>
+                <field name="max_weight_g"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="sale_store_shipping_box_view_form" model="ir.ui.view">
+        <field name="name">sale.store.shipping.box.form</field>
+        <field name="model">sale.store.shipping.box</field>
+        <field name="arch" type="xml">
+            <form string="Caja postal">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group string="Peso">
+                            <field name="tare_weight_g"/>
+                            <field name="max_weight_g"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Medidas internas para acomodar productos (cm)">
+                            <field name="inner_length_cm"/>
+                            <field name="inner_width_cm"/>
+                            <field name="inner_height_cm"/>
+                        </group>
+                        <group string="Medidas externas para Correo Argentino (cm)">
+                            <field name="outer_length_cm"/>
+                            <field name="outer_width_cm"/>
+                            <field name="outer_height_cm"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="sale_store_shipping_box_action" model="ir.actions.act_window">
+        <field name="name">Cajas de envío</field>
+        <field name="res_model">sale.store.shipping.box</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+    <menuitem id="sale_store_shipping_box_menu"
+              name="Cajas de envío"
+              parent="sale.menu_sale_config"
+              action="sale_store_shipping_box_action"
+              sequence="65"
+              groups="sales_team.group_sale_manager,base.group_system"/>
+</odoo>

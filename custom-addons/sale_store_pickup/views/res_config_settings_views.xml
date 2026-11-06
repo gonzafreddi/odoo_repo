@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_correo" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.sale.store.pickup.correo</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='sale_shipping_setting_container']/setting[@id='delivery']" position="after">
+                <setting id="sale_store_pickup_correo_argentino"
+                         string="Correo Argentino MiCorreo"
+                         help="Configura las credenciales usadas por la tienda para cotizar envíos.">
+                    <field name="correo_argentino_enabled"/>
+                    <field name="correo_argentino_password_configured" invisible="1"/>
+                    <div class="content-group mt16">
+                        <div class="row">
+                            <label for="correo_argentino_username" class="col-lg-4 o_light_label"/>
+                            <field name="correo_argentino_username"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="correo_argentino_password_input" class="col-lg-4 o_light_label"/>
+                            <field name="correo_argentino_password_input" password="True" placeholder="Dejá vacío para conservarla"/>
+                        </div>
+                        <div class="row mt4" invisible="not correo_argentino_password_configured">
+                            <span class="text-muted">Hay una contraseña guardada. El valor no se muestra.</span>
+                        </div>
+                        <div class="row mt4" invisible="not correo_argentino_password_configured">
+                            <label for="correo_argentino_clear_password" class="col-lg-4 o_light_label"/>
+                            <field name="correo_argentino_clear_password"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="correo_argentino_customer_id" class="col-lg-4 o_light_label"/>
+                            <field name="correo_argentino_customer_id"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="correo_argentino_origin_postal_code" class="col-lg-4 o_light_label"/>
+                            <field name="correo_argentino_origin_postal_code"/>
+                        </div>
+                        <separator string="Datos del remitente para importar envíos"/>
+                        <div class="row mt8"><label for="correo_argentino_sender_name" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_name"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_phone" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_phone"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_cell_phone" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_cell_phone"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_email" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_email"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_street" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_street"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_street_number" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_street_number"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_floor" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_floor"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_apartment" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_apartment"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_city" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_city"/></div>
+                        <div class="row mt8"><label for="correo_argentino_sender_province_code" class="col-lg-4 o_light_label"/><field name="correo_argentino_sender_province_code"/></div>
+                    </div>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>

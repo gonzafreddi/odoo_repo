@@ -1,7 +1,7 @@
 import base64
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 
 class SaleOrder(models.Model):
@@ -13,6 +13,14 @@ class SaleOrder(models.Model):
         index=True,
         help="Indica que el cliente retirará el pedido en el local.",
     )
+    x_shipping_destination_type = fields.Selection(
+        selection=[("home", "Domicilio"), ("agency", "Sucursal Correo Argentino")],
+        string="Destino postal",
+        default="home",
+        index=True,
+    )
+    x_shipping_agency_code = fields.Char(string="Código de sucursal postal")
+    x_shipping_agency_name = fields.Char(string="Sucursal postal")
     x_logistics_status = fields.Selection(
         selection=[
             ("pending", "Pendiente"),
@@ -53,6 +61,93 @@ class SaleOrder(models.Model):
         currency_field="currency_id",
         help="Costo cotizado del envío. Se completa manualmente.",
     )
+    x_shipping_products_weight_g = fields.Integer(
+        string="Peso total de productos (g)",
+        readonly=True,
+    )
+    x_shipping_total_weight_g = fields.Integer(
+        string="Peso total de bultos (g)",
+        readonly=True,
+        help="Incluye el peso de los productos y la tara de todas las cajas.",
+    )
+    x_shipping_parcels_details = fields.Text(
+        string="Detalle de cajas y productos",
+        readonly=True,
+    )
+    x_is_correo_argentino = fields.Boolean(
+        string="Envío por Correo Argentino",
+        default=False,
+        readonly=True,
+        copy=False,
+        index=True,
+    )
+    x_correo_quote_snapshot = fields.Text(
+        string="Datos de cotización postal",
+        readonly=True,
+        copy=False,
+    )
+    x_correo_shipment_status = fields.Selection(
+        selection=[
+            ("not_requested", "No solicitado"),
+            ("requested", "Solicitado manualmente"),
+            ("importing", "Importando"),
+            ("imported", "Importado en MiCorreo"),
+            ("failed", "Error de importación"),
+            ("unknown", "Resultado pendiente de revisar"),
+        ],
+        string="Estado MiCorreo",
+        default="not_requested",
+        readonly=True,
+        copy=False,
+        index=True,
+        tracking=True,
+    )
+    x_correo_shipment_created_at = fields.Char(
+        string="Fecha de importación MiCorreo",
+        readonly=True,
+        copy=False,
+    )
+    x_correo_shipping_id = fields.Char(
+        string="ID de envío MiCorreo",
+        readonly=True,
+        copy=False,
+    )
+    x_correo_tracking_number = fields.Char(
+        string="Número de seguimiento postal",
+        readonly=True,
+        copy=False,
+        index=True,
+    )
+    x_correo_shipment_error = fields.Text(
+        string="Error de envío postal",
+        readonly=True,
+        copy=False,
+    )
+
+    def action_request_correo_shipment(self):
+        self.ensure_one()
+        if not self.env.user.has_group(
+            "sale_store_pickup.group_correo_integration"
+        ):
+            raise AccessError("No tenés permiso para solicitar el envío postal.")
+        if not self.x_is_correo_argentino or self.x_is_store_pickup:
+            raise ValidationError(
+                "Esta orden no corresponde a un envío de Correo Argentino."
+            )
+        if not self.x_correo_quote_snapshot:
+            raise ValidationError(
+                "La orden no tiene guardados los datos de la cotización postal."
+            )
+        if self.x_correo_shipment_status in ("imported", "unknown", "importing"):
+            raise ValidationError(
+                "La importación ya se realizó o tiene un resultado pendiente. "
+                "Revisá el estado antes de volver a solicitarla."
+            )
+        self.write({
+            "x_correo_shipment_status": "requested",
+            "x_correo_shipment_error": False,
+        })
+        return True
 
     @api.constrains("x_is_store_pickup", "x_logistics_status")
     def _check_logistics_status_matches_delivery_method(self):

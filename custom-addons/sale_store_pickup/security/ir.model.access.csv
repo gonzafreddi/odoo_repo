@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sale_store_shipping_box_admin,sale.store.shipping.box Sales Manager,model_sale_store_shipping_box,sales_team.group_sale_manager,1,1,1,1
+access_sale_store_shipping_box_system,sale.store.shipping.box system admin,model_sale_store_shipping_box,base.group_system,1,1,1,1
+access_sale_store_shipping_box_correo,sale.store.shipping.box Correo API,model_sale_store_shipping_box,sale_store_pickup.group_correo_integration,1,0,0,0
